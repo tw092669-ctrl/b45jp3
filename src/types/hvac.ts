@@ -85,6 +85,7 @@ export interface FloorPlanRect {
   maxRow: number;
   minCol: number;
   maxCol: number;
+  shapeCells?: { r: number; c: number }[];
   mergedFrom?: FloorPlanRect[];
 }
 

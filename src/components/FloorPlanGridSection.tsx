@@ -53,6 +53,23 @@ interface ConnectedBlock {
   maxC: number;
 }
 
+function getRectShapeCells(rect: FloorPlanRect): { r: number; c: number }[] {
+  if (rect.shapeCells?.length) {
+    return rect.shapeCells.map((cell) => ({ ...cell }));
+  }
+  const cells: { r: number; c: number }[] = [];
+  for (let r = rect.minRow; r <= rect.maxRow; r++) {
+    for (let c = rect.minCol; c <= rect.maxCol; c++) {
+      cells.push({ r, c });
+    }
+  }
+  return cells;
+}
+
+function rectContainsCell(rect: FloorPlanRect, row: number, col: number): boolean {
+  return getRectShapeCells(rect).some((cell) => cell.r === row && cell.c === col);
+}
+
 function extractConnectedBlocks(cells: Record<string, number>, gridSize: number): ConnectedBlock[] {
   const visited = new Set<string>();
   const blocks: ConnectedBlock[] = [];
@@ -171,12 +188,22 @@ export function renderFloorPlanCanvas(
   const coveredKeys = new Set<string>();
   for (const rect of floorPlan.rects ?? []) {
     const rectCells: { r: number; c: number }[] = [];
-    for (let r = rect.minRow; r <= rect.maxRow; r++) {
-      for (let c = rect.minCol; c <= rect.maxCol; c++) {
-        const key = `${r},${c}`;
-        if (r >= 0 && c >= 0 && r < N && c < N) {
-          rectCells.push({ r, c });
+    if (rect.shapeCells?.length) {
+      for (const cell of rect.shapeCells) {
+        const key = `${cell.r},${cell.c}`;
+        if (cell.r >= 0 && cell.c >= 0 && cell.r < N && cell.c < N) {
+          rectCells.push({ r: cell.r, c: cell.c });
           coveredKeys.add(key);
+        }
+      }
+    } else {
+      for (let r = rect.minRow; r <= rect.maxRow; r++) {
+        for (let c = rect.minCol; c <= rect.maxCol; c++) {
+          const key = `${r},${c}`;
+          if (r >= 0 && c >= 0 && r < N && c < N) {
+            rectCells.push({ r, c });
+            coveredKeys.add(key);
+          }
         }
       }
     }
@@ -507,10 +534,7 @@ export default function FloorPlanGridSection({
       isDrawingRef.current = false;
       startCellRef.current = null;
       const rect = [...(data.rects ?? [])].reverse().find((item) =>
-        cell.row >= item.minRow &&
-        cell.row <= item.maxRow &&
-        cell.col >= item.minCol &&
-        cell.col <= item.maxCol
+        rectContainsCell(item, cell.row, cell.col)
       );
       setSelectedRectId(rect?.id ?? null);
       if (rect) {
@@ -587,13 +611,19 @@ export default function FloorPlanGridSection({
       const cols = drag.original.maxCol - drag.original.minCol;
       const minRow = Math.max(0, Math.min(data.gridSize - rows - 1, drag.original.minRow + rowDelta));
       const minCol = Math.max(0, Math.min(data.gridSize - cols - 1, drag.original.minCol + colDelta));
-      const overlapsAnotherRect = drag.baseRects.some((rect) =>
-        rect.id !== drag.id &&
-        minRow <= rect.maxRow &&
-        minRow + rows >= rect.minRow &&
-        minCol <= rect.maxCol &&
-        minCol + cols >= rect.minCol
-      );
+      const rowMove = minRow - drag.original.minRow;
+      const colMove = minCol - drag.original.minCol;
+      const movedShape = getRectShapeCells(drag.original).map((shapeCell) => ({
+        r: shapeCell.r + rowMove,
+        c: shapeCell.c + colMove,
+      }));
+      const movedShapeKeys = new Set(movedShape.map((shapeCell) => `${shapeCell.r},${shapeCell.c}`));
+      const overlapsAnotherRect = drag.baseRects.some((rect) => {
+        if (rect.id === drag.id) return false;
+        return getRectShapeCells(rect).some(
+          (shapeCell) => movedShapeKeys.has(`${shapeCell.r},${shapeCell.c}`)
+        );
+      });
       if (overlapsAnotherRect) return;
       const nextRects = drag.baseRects.map((rect) =>
         rect.id === drag.id
@@ -603,20 +633,17 @@ export default function FloorPlanGridSection({
               maxRow: minRow + rows,
               minCol,
               maxCol: minCol + cols,
+              shapeCells: drag.original.shapeCells?.length ? movedShape : undefined,
             }
           : rect
       );
 
       const nextCells = { ...drag.baseCells };
-      for (let r = drag.original.minRow; r <= drag.original.maxRow; r++) {
-        for (let c = drag.original.minCol; c <= drag.original.maxCol; c++) {
-          delete nextCells[`${r},${c}`];
-        }
+      for (const shapeCell of getRectShapeCells(drag.original)) {
+        delete nextCells[`${shapeCell.r},${shapeCell.c}`];
       }
-      for (let r = minRow; r <= minRow + rows; r++) {
-        for (let c = minCol; c <= minCol + cols; c++) {
-          nextCells[`${r},${c}`] = drag.original.colorIdx;
-        }
+      for (const shapeCell of movedShape) {
+        nextCells[`${shapeCell.r},${shapeCell.c}`] = drag.original.colorIdx;
       }
       onChange({ ...data, rects: nextRects, cells: nextCells });
       return;
@@ -688,12 +715,35 @@ export default function FloorPlanGridSection({
             delete nextCells[`${r},${c}`];
           }
         }
-        const nextRects = (data.rects ?? []).filter((rect) =>
-          rect.maxRow < minR ||
-          rect.minRow > maxR ||
-          rect.maxCol < minC ||
-          rect.minCol > maxC
-        );
+        const nextRects: FloorPlanRect[] = [];
+        for (const rect of data.rects ?? []) {
+          const overlaps =
+            rect.maxRow >= minR &&
+            rect.minRow <= maxR &&
+            rect.maxCol >= minC &&
+            rect.minCol <= maxC;
+          if (!overlaps) {
+            nextRects.push(rect);
+            continue;
+          }
+          const remaining = getRectShapeCells(rect).filter(
+            (cell) =>
+              cell.r < minR ||
+              cell.r > maxR ||
+              cell.c < minC ||
+              cell.c > maxC
+          );
+          if (remaining.length === 0) continue;
+          nextRects.push({
+            ...rect,
+            minRow: Math.min(...remaining.map((cell) => cell.r)),
+            maxRow: Math.max(...remaining.map((cell) => cell.r)),
+            minCol: Math.min(...remaining.map((cell) => cell.c)),
+            maxCol: Math.max(...remaining.map((cell) => cell.c)),
+            shapeCells: remaining,
+            mergedFrom: undefined,
+          });
+        }
         onChange({ ...data, cells: nextCells, rects: nextRects });
         setRectPreview(null);
         startCellRef.current = null;
@@ -769,6 +819,41 @@ export default function FloorPlanGridSection({
     const nextWidth = Math.max(1, Math.min(data.gridSize - selectedRect.minCol, widthCells));
     const nextHeight = Math.max(1, Math.min(data.gridSize - selectedRect.minRow, heightCells));
     pushHistory(data);
+
+    if (selectedRect.shapeCells?.length) {
+      const sourceWidth = selectedRect.maxCol - selectedRect.minCol + 1;
+      const sourceHeight = selectedRect.maxRow - selectedRect.minRow + 1;
+      const scaleX = nextWidth / sourceWidth;
+      const scaleY = nextHeight / sourceHeight;
+      const scaledShape = new Map<string, { r: number; c: number }>();
+      for (const cell of selectedRect.shapeCells) {
+        const cOffset = cell.c - selectedRect.minCol;
+        const rOffset = cell.r - selectedRect.minRow;
+        const scaledC = selectedRect.minCol + Math.min(nextWidth - 1, Math.floor(cOffset * scaleX));
+        const scaledR = selectedRect.minRow + Math.min(nextHeight - 1, Math.floor(rOffset * scaleY));
+        scaledShape.set(`${scaledR},${scaledC}`, { r: scaledR, c: scaledC });
+      }
+      const shapeCells = [...scaledShape.values()];
+      const nextRect: FloorPlanRect = {
+        ...selectedRect,
+        maxCol: selectedRect.minCol + nextWidth - 1,
+        maxRow: selectedRect.minRow + nextHeight - 1,
+        shapeCells,
+      };
+      const nextRects = (data.rects ?? []).map((rect) =>
+        rect.id === selectedRect.id ? nextRect : rect
+      );
+      const nextCells = { ...data.cells };
+      for (const cell of getRectShapeCells(selectedRect)) {
+        delete nextCells[`${cell.r},${cell.c}`];
+      }
+      for (const cell of shapeCells) {
+        nextCells[`${cell.r},${cell.c}`] = nextRect.colorIdx;
+      }
+      onChange({ ...data, rects: nextRects, cells: nextCells });
+      return;
+    }
+
     const nextRect: FloorPlanRect = {
       ...selectedRect,
       maxCol: selectedRect.minCol + nextWidth - 1,
@@ -802,16 +887,12 @@ export default function FloorPlanGridSection({
         .filter((rect) => rect.id !== selected.id)
         .concat(selected.mergedFrom.map((source) => ({ ...source, mergedFrom: undefined })));
       const nextCells = { ...data.cells };
-      for (let r = selected.minRow; r <= selected.maxRow; r++) {
-        for (let c = selected.minCol; c <= selected.maxCol; c++) {
-          delete nextCells[`${r},${c}`];
-        }
+      for (const cell of getRectShapeCells(selected)) {
+        delete nextCells[`${cell.r},${cell.c}`];
       }
       selected.mergedFrom.forEach((source) => {
-        for (let r = source.minRow; r <= source.maxRow; r++) {
-          for (let c = source.minCol; c <= source.maxCol; c++) {
-            nextCells[`${r},${c}`] = source.colorIdx;
-          }
+        for (const cell of getRectShapeCells(source)) {
+          nextCells[`${cell.r},${cell.c}`] = source.colorIdx;
         }
       });
       setSelectedRectId(null);
@@ -823,6 +904,13 @@ export default function FloorPlanGridSection({
     const sources = rects.filter((rect) => rect.colorIdx === colorIdx && !rect.mergedFrom?.length);
     if (sources.length < 2) return;
     pushHistory(data);
+    const shapeMap = new Map<string, { r: number; c: number }>();
+    sources.forEach((source) => {
+      getRectShapeCells(source).forEach((cell) => {
+        shapeMap.set(`${cell.r},${cell.c}`, { r: cell.r, c: cell.c });
+      });
+    });
+    const shapeCells = [...shapeMap.values()];
     const merged: FloorPlanRect = {
       id: `merged-${Date.now()}`,
       colorIdx,
@@ -830,16 +918,15 @@ export default function FloorPlanGridSection({
       maxRow: Math.max(...sources.map((rect) => rect.maxRow)),
       minCol: Math.min(...sources.map((rect) => rect.minCol)),
       maxCol: Math.max(...sources.map((rect) => rect.maxCol)),
+      shapeCells,
       mergedFrom: sources.map((source) => ({ ...source })),
     };
     const sourceIds = new Set(sources.map((source) => source.id));
     const nextRects = rects.filter((rect) => !sourceIds.has(rect.id));
     nextRects.push(merged);
     const nextCells = { ...data.cells };
-    for (let r = merged.minRow; r <= merged.maxRow; r++) {
-      for (let c = merged.minCol; c <= merged.maxCol; c++) {
-        nextCells[`${r},${c}`] = colorIdx;
-      }
+    for (const cell of shapeCells) {
+      nextCells[`${cell.r},${cell.c}`] = colorIdx;
     }
     setSelectedRectId(merged.id);
     onChange({ ...data, rects: nextRects, cells: nextCells });
@@ -921,7 +1008,7 @@ export default function FloorPlanGridSection({
             平面空間立體方格圖（{data.gridSize} × {data.gridSize} 格）
           </h2>
           <p className="mt-0.5 text-xs text-[#7A675B]">
-            框選矩形後可拖移、調整長寬；相同顏色矩形會獨立保留，按「合併」才會合併，再按一次即拆解。坪數公式：面積(cm²) ÷ 32,400（取至小數點後 1 位）。
+            框選矩形後可拖移、調整長寬；相同顏色矩形會獨立保留，按「合併」會依實際格位聯集形成不規則多邊形，再按一次即拆解。坪數依實際著色格數計算：面積(cm²) ÷ 32,400（取至小數點後 1 位）。
           </p>
         </div>
 
