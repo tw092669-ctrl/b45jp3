@@ -380,10 +380,11 @@ export default function App() {
         id: `srv-pipe-${Date.now()}-${idx}`,
         label: room.area || `空間 #${idx + 1}`,
         pipeGauge: guessedGauge,
-        lengthM: totalPipe > 0 ? Number(totalPipe.toFixed(1)) : 6,
-        drainLengthM: totalPipe > 0 ? Number((totalPipe * 0.7).toFixed(1)) : 4,
-        cableType: '2.0mm電源線',
-        heightDiffM: 2.5,
+        lengthM: totalPipe > 0 ? Number(totalPipe.toFixed(1)) : '',
+        signalCableType: '2C隔離線',
+        signalCableLengthM: '',
+        powerCableType: '2.0mm電源線',
+        powerCableLengthM: '',
       };
     });
     setPipingSeedRuns(mapped);

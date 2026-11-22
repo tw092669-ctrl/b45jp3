@@ -21,4 +21,6 @@ export const PIPE_WIRE_CATALOG = [...PIPE_CATALOG, ...WIRE_CATALOG] as const;
 
 export type PipeGauge = (typeof PIPE_CATALOG)[number]['name'];
 export type WireType = (typeof WIRE_CATALOG)[number]['name'];
+export type SignalCableType = (typeof SIGNAL_CABLE_CATALOG)[number]['name'];
+export type PowerCableType = (typeof POWER_CABLE_CATALOG)[number]['name'];
 export type PipeWireSpec = (typeof PIPE_WIRE_CATALOG)[number];

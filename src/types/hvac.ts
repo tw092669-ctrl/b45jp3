@@ -1,4 +1,8 @@
-import type { PipeGauge, WireType } from '../data/pipeWireCatalog';
+import type {
+  PipeGauge,
+  PowerCableType,
+  SignalCableType,
+} from '../data/pipeWireCatalog';
 
 export type ModuleId = 'home' | 'price' | 'survey' | 'multisplit' | 'piping' | 'quote' | 'space';
 
@@ -136,8 +140,9 @@ export interface PipingRunItem {
   id: string;
   label: string;
   pipeGauge: PipeGauge;
-  lengthM: number;
-  drainLengthM: number;
-  cableType: WireType;
-  heightDiffM: number;
+  lengthM: number | '';
+  signalCableType: SignalCableType;
+  signalCableLengthM: number | '';
+  powerCableType: PowerCableType;
+  powerCableLengthM: number | '';
 }

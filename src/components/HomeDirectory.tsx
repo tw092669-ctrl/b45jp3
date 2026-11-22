@@ -64,9 +64,9 @@ export default function HomeDirectory({
       id: 'piping',
       index: '04',
       title: '管路計算系統',
-      subtitle: '被覆銅管用量、冷媒追加與高落差計算',
+      subtitle: '銅管、控制線與電源線長度及金額計算',
       description:
-        '依各管徑計算銅管米數與捲數、PVC 排水與控制線材料估算、R32/R410A 冷媒追加充填量檢核，並預留自訂管路設計表（CSV / JSON）匯入接口。',
+        '依空間設定管徑與銅管、控制線、電源線長度，自動計算各迴路金額及總金額。',
       statLabel: '支援從場地探勘紀錄一鍵帶入管長',
       icon: Calculator,
       accentClass: 'text-[#FFF8EE] bg-[#5C4F49] border-[#3B312C]',
