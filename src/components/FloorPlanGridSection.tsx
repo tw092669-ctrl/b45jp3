@@ -10,7 +10,7 @@ import {
   Undo2,
   X,
 } from 'lucide-react';
-import { FloorPlanColorZone, FloorPlanData } from '../types/hvac';
+import { FloorPlanColorZone, FloorPlanData, FloorPlanRect } from '../types/hvac';
 import ConfirmDialog from './ConfirmDialog';
 
 export const DEFAULT_FLOORPLAN_PALETTE: FloorPlanColorZone[] = [
@@ -31,6 +31,7 @@ export function createDefaultFloorPlan(): FloorPlanData {
     compassAngle: 0,
     palette: DEFAULT_FLOORPLAN_PALETTE.map((p) => ({ ...p })),
     cells: {},
+    rects: [],
   };
 }
 
@@ -164,8 +165,37 @@ export function renderFloorPlanCanvas(
     return cells[`${r},${c}`];
   };
 
-  // Extract contiguous merged blocks of the same color so each merged shape renders as ONE unified 3D block
-  const blocks = extractConnectedBlocks(cells, N);
+  // Explicit rectangles are rendered independently. Legacy data without rects still uses
+  // the old contiguous-block rendering for backward compatibility.
+  const blocks: ConnectedBlock[] = [];
+  const coveredKeys = new Set<string>();
+  for (const rect of floorPlan.rects ?? []) {
+    const rectCells: { r: number; c: number }[] = [];
+    for (let r = rect.minRow; r <= rect.maxRow; r++) {
+      for (let c = rect.minCol; c <= rect.maxCol; c++) {
+        const key = `${r},${c}`;
+        if (r >= 0 && c >= 0 && r < N && c < N) {
+          rectCells.push({ r, c });
+          coveredKeys.add(key);
+        }
+      }
+    }
+    if (rectCells.length > 0) {
+      blocks.push({
+        colorIdx: rect.colorIdx,
+        cells: rectCells,
+        minR: rect.minRow,
+        maxR: rect.maxRow,
+        minC: rect.minCol,
+        maxC: rect.maxCol,
+      });
+    }
+  }
+  const legacyCells: Record<string, number> = {};
+  for (const key in cells) {
+    if (!coveredKeys.has(key)) legacyCells[key] = cells[key];
+  }
+  blocks.push(...extractConnectedBlocks(legacyCells, N));
   // Sort blocks top-to-bottom, left-to-right for natural 2.5D painter's order
   blocks.sort((a, b) => a.minR - b.minR || a.minC - b.minC);
 
@@ -356,7 +386,7 @@ interface FloorPlanGridSectionProps {
   onChange: (updated: FloorPlanData) => void;
 }
 
-type ToolMode = 'rect' | 'brush' | 'eraser';
+type ToolMode = 'rect' | 'brush' | 'eraser' | 'select';
 
 export default function FloorPlanGridSection({
   floorPlan,
@@ -369,7 +399,14 @@ export default function FloorPlanGridSection({
   const [is3DTilt, setIs3DTilt] = useState<boolean>(false);
   const [editingColorId, setEditingColorId] = useState<number | null>(null);
   const [showCompassEditor, setShowCompassEditor] = useState<boolean>(false);
-  const [history, setHistory] = useState<Record<string, number>[]>([]);
+  const [history, setHistory] = useState<FloorPlanData[]>([]);
+  const [selectedRectId, setSelectedRectId] = useState<string | null>(null);
+  const dragRectRef = useRef<{
+    id: string;
+    startRow: number;
+    startCol: number;
+    original: FloorPlanRect;
+  } | null>(null);
 
   // Pointer dragging state
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -443,8 +480,16 @@ export default function FloorPlanGridSection({
     [data.gridSize]
   );
 
-  const pushHistory = (snapshot: Record<string, number>) => {
-    setHistory((prev) => [...prev.slice(-19), { ...snapshot }]);
+  const pushHistory = (snapshot: FloorPlanData) => {
+    setHistory((prev) => [...prev.slice(-19), {
+      ...snapshot,
+      palette: snapshot.palette.map((zone) => ({ ...zone })),
+      cells: { ...snapshot.cells },
+      rects: (snapshot.rects ?? []).map((rect) => ({
+        ...rect,
+        mergedFrom: rect.mergedFrom?.map((source) => ({ ...source })),
+      })),
+    }]);
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -453,11 +498,33 @@ export default function FloorPlanGridSection({
     if (!cell) return;
 
     e.currentTarget.setPointerCapture(e.pointerId);
+
+    if (toolMode === 'select') {
+      const rect = [...(data.rects ?? [])].reverse().find((item) =>
+        cell.row >= item.minRow &&
+        cell.row <= item.maxRow &&
+        cell.col >= item.minCol &&
+        cell.col <= item.maxCol
+      );
+      setSelectedRectId(rect?.id ?? null);
+      if (rect) {
+        pushHistory(data);
+        dragRectRef.current = {
+          id: rect.id,
+          startRow: cell.row,
+          startCol: cell.col,
+          original: { ...rect, mergedFrom: rect.mergedFrom?.map((source) => ({ ...source })) },
+        };
+        isDrawingRef.current = true;
+      }
+      return;
+    }
+
     isDrawingRef.current = true;
     startCellRef.current = cell;
 
     const forceErase = e.button === 2 || toolMode === 'eraser';
-    pushHistory(data.cells);
+    pushHistory(data);
 
     // Rectangular selection mode for both painting ('rect') and erasing ('eraser' / right-click)
     if (toolMode === 'rect' || forceErase) {
@@ -500,6 +567,41 @@ export default function FloorPlanGridSection({
     }
 
     if (!isDrawingRef.current || !cell) return;
+
+    if (dragRectRef.current) {
+      const drag = dragRectRef.current;
+      const rowDelta = cell.row - drag.startRow;
+      const colDelta = cell.col - drag.startCol;
+      const rows = drag.original.maxRow - drag.original.minRow;
+      const cols = drag.original.maxCol - drag.original.minCol;
+      const minRow = Math.max(0, Math.min(data.gridSize - rows - 1, drag.original.minRow + rowDelta));
+      const minCol = Math.max(0, Math.min(data.gridSize - cols - 1, drag.original.minCol + colDelta));
+      const nextRects = (data.rects ?? []).map((rect) =>
+        rect.id === drag.id
+          ? {
+              ...rect,
+              minRow,
+              maxRow: minRow + rows,
+              minCol,
+              maxCol: minCol + cols,
+            }
+          : rect
+      );
+
+      const nextCells = { ...data.cells };
+      for (let r = drag.original.minRow; r <= drag.original.maxRow; r++) {
+        for (let c = drag.original.minCol; c <= drag.original.maxCol; c++) {
+          delete nextCells[`${r},${c}`];
+        }
+      }
+      for (let r = minRow; r <= minRow + rows; r++) {
+        for (let c = minCol; c <= minCol + cols; c++) {
+          nextCells[`${r},${c}`] = drag.original.colorIdx;
+        }
+      }
+      onChange({ ...data, rects: nextRects, cells: nextCells });
+      return;
+    }
 
     if (rectPreview && startCellRef.current) {
       setRectPreview({
@@ -547,6 +649,12 @@ export default function FloorPlanGridSection({
     if (!isDrawingRef.current) return;
     isDrawingRef.current = false;
 
+    if (dragRectRef.current) {
+      dragRectRef.current = null;
+      startCellRef.current = null;
+      return;
+    }
+
     if (rectPreview) {
       const minR = Math.min(rectPreview.startRow, rectPreview.endRow);
       const maxR = Math.max(rectPreview.startRow, rectPreview.endRow);
@@ -561,15 +669,57 @@ export default function FloorPlanGridSection({
             delete nextCells[`${r},${c}`];
           }
         }
+        const nextRects = (data.rects ?? []).filter((rect) =>
+          rect.maxRow < minR ||
+          rect.minRow > maxR ||
+          rect.maxCol < minC ||
+          rect.minCol > maxC
+        );
+        onChange({ ...data, cells: nextCells, rects: nextRects });
+        setRectPreview(null);
+        startCellRef.current = null;
+        if (selectedRectId) setSelectedRectId(null);
+        return;
       } else if (isSingleCell && nextCells[`${minR},${minC}`] === activeColorIdx) {
         // Single click on already-active single cell toggles it off
         delete nextCells[`${minR},${minC}`];
+        const nextRects = (data.rects ?? []).filter((rect) =>
+          !(
+            rect.minRow === minR &&
+            rect.maxRow === minR &&
+            rect.minCol === minC &&
+            rect.maxCol === minC &&
+            rect.colorIdx === activeColorIdx
+          )
+        );
+        setSelectedRectId(null);
+        setRectPreview(null);
+        onChange({ ...data, cells: nextCells, rects: nextRects });
+        startCellRef.current = null;
+        return;
       } else {
         for (let r = minR; r <= maxR; r++) {
           for (let c = minC; c <= maxC; c++) {
             nextCells[`${r},${c}`] = activeColorIdx;
           }
         }
+        const rectId = `rect-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        const nextRects = [
+          ...(data.rects ?? []),
+          {
+            id: rectId,
+            colorIdx: activeColorIdx,
+            minRow: minR,
+            maxRow: maxR,
+            minCol: minC,
+            maxCol: maxC,
+          },
+        ];
+        setSelectedRectId(rectId);
+        onChange({ ...data, cells: nextCells, rects: nextRects });
+        setRectPreview(null);
+        startCellRef.current = null;
+        return;
       }
 
       setRectPreview(null);
@@ -582,13 +732,98 @@ export default function FloorPlanGridSection({
     if (history.length === 0) return;
     const prev = history[history.length - 1];
     setHistory((h) => h.slice(0, -1));
-    onChange({ ...data, cells: prev });
+    setSelectedRectId(null);
+    onChange(prev);
   };
 
   const handleClearAll = () => {
     if (Object.keys(data.cells).length === 0) return;
-    pushHistory(data.cells);
-    onChange({ ...data, cells: {} });
+    pushHistory(data);
+    setSelectedRectId(null);
+    onChange({ ...data, cells: {}, rects: [] });
+  };
+
+  const selectedRect = (data.rects ?? []).find((rect) => rect.id === selectedRectId) ?? null;
+
+  const resizeSelectedRect = (widthCells: number, heightCells: number) => {
+    if (!selectedRect) return;
+    const nextWidth = Math.max(1, Math.min(data.gridSize - selectedRect.minCol, widthCells));
+    const nextHeight = Math.max(1, Math.min(data.gridSize - selectedRect.minRow, heightCells));
+    pushHistory(data);
+    const nextRect: FloorPlanRect = {
+      ...selectedRect,
+      maxCol: selectedRect.minCol + nextWidth - 1,
+      maxRow: selectedRect.minRow + nextHeight - 1,
+    };
+    const nextRects = (data.rects ?? []).map((rect) =>
+      rect.id === selectedRect.id ? nextRect : rect
+    );
+    const nextCells = { ...data.cells };
+    for (let r = selectedRect.minRow; r <= selectedRect.maxRow; r++) {
+      for (let c = selectedRect.minCol; c <= selectedRect.maxCol; c++) {
+        delete nextCells[`${r},${c}`];
+      }
+    }
+    for (let r = nextRect.minRow; r <= nextRect.maxRow; r++) {
+      for (let c = nextRect.minCol; c <= nextRect.maxCol; c++) {
+        nextCells[`${r},${c}`] = nextRect.colorIdx;
+      }
+    }
+    onChange({ ...data, rects: nextRects, cells: nextCells });
+  };
+
+  const handleMergeSelected = () => {
+    const rects = data.rects ?? [];
+    if (rects.length === 0) return;
+
+    const selected = rects.find((rect) => rect.id === selectedRectId);
+    if (selected?.mergedFrom?.length) {
+      pushHistory(data);
+      const nextRects = rects
+        .filter((rect) => rect.id !== selected.id)
+        .concat(selected.mergedFrom.map((source) => ({ ...source, mergedFrom: undefined })));
+      const nextCells = { ...data.cells };
+      for (let r = selected.minRow; r <= selected.maxRow; r++) {
+        for (let c = selected.minCol; c <= selected.maxCol; c++) {
+          delete nextCells[`${r},${c}`];
+        }
+      }
+      selected.mergedFrom.forEach((source) => {
+        for (let r = source.minRow; r <= source.maxRow; r++) {
+          for (let c = source.minCol; c <= source.maxCol; c++) {
+            nextCells[`${r},${c}`] = source.colorIdx;
+          }
+        }
+      });
+      setSelectedRectId(null);
+      onChange({ ...data, rects: nextRects, cells: nextCells });
+      return;
+    }
+
+    const colorIdx = selected?.colorIdx ?? activeColorIdx;
+    const sources = rects.filter((rect) => rect.colorIdx === colorIdx && !rect.mergedFrom?.length);
+    if (sources.length < 2) return;
+    pushHistory(data);
+    const merged: FloorPlanRect = {
+      id: `merged-${Date.now()}`,
+      colorIdx,
+      minRow: Math.min(...sources.map((rect) => rect.minRow)),
+      maxRow: Math.max(...sources.map((rect) => rect.maxRow)),
+      minCol: Math.min(...sources.map((rect) => rect.minCol)),
+      maxCol: Math.max(...sources.map((rect) => rect.maxCol)),
+      mergedFrom: sources.map((source) => ({ ...source })),
+    };
+    const sourceIds = new Set(sources.map((source) => source.id));
+    const nextRects = rects.filter((rect) => !sourceIds.has(rect.id));
+    nextRects.push(merged);
+    const nextCells = { ...data.cells };
+    for (let r = merged.minRow; r <= merged.maxRow; r++) {
+      for (let c = merged.minCol; c <= merged.maxCol; c++) {
+        nextCells[`${r},${c}`] = colorIdx;
+      }
+    }
+    setSelectedRectId(merged.id);
+    onChange({ ...data, rects: nextRects, cells: nextCells });
   };
 
   // Ping calculation: 公分 * 公分 / 32400, rounded to 1 decimal place
@@ -667,9 +902,64 @@ export default function FloorPlanGridSection({
             平面空間立體方格圖（{data.gridSize} × {data.gridSize} 格）
           </h2>
           <p className="mt-0.5 text-xs text-[#7A675B]">
-            拖曳選取矩形範圍，相鄰同色方格將自動合併為單一整體立體方塊，坪數公式：面積(cm²) ÷ 32,400（取至小數點後 1 位）。
+            框選矩形後可拖移、調整長寬；相同顏色矩形會獨立保留，按「合併」才會合併，再按一次即拆解。坪數公式：面積(cm²) ÷ 32,400（取至小數點後 1 位）。
           </p>
         </div>
+
+        {selectedRect && (
+          <div className="rounded-xl border border-[#C68934] bg-[#FDF0D5] p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-extrabold text-[#3B312C]">選取矩形設定</span>
+              <button
+                type="button"
+                onClick={() => setSelectedRectId(null)}
+                className="rounded-lg p-1 text-[#7A675B] hover:bg-[#F5E6D5]"
+                title="取消選取"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="text-[11px] font-bold text-[#7A675B]">
+                長度（格）
+                <input
+                  type="number"
+                  min={1}
+                  max={data.gridSize - selectedRect.minCol}
+                  value={selectedRect.maxCol - selectedRect.minCol + 1}
+                  onChange={(e) =>
+                    resizeSelectedRect(
+                      Number(e.target.value) || 1,
+                      selectedRect.maxRow - selectedRect.minRow + 1
+                    )
+                  }
+                  className="mt-1 block w-full rounded-lg border border-[#CBB5A5] bg-[#FFFDF9] px-2 py-1.5 text-sm font-bold text-[#3B312C]"
+                />
+              </label>
+              <label className="text-[11px] font-bold text-[#7A675B]">
+                寬度（格）
+                <input
+                  type="number"
+                  min={1}
+                  max={data.gridSize - selectedRect.minRow}
+                  value={selectedRect.maxRow - selectedRect.minRow + 1}
+                  onChange={(e) =>
+                    resizeSelectedRect(
+                      selectedRect.maxCol - selectedRect.minCol + 1,
+                      Number(e.target.value) || 1
+                    )
+                  }
+                  className="mt-1 block w-full rounded-lg border border-[#CBB5A5] bg-[#FFFDF9] px-2 py-1.5 text-sm font-bold text-[#3B312C]"
+                />
+              </label>
+            </div>
+            <div className="mt-2 font-mono-tabular text-[11px] font-semibold text-[#7A675B]">
+              實長 {((selectedRect.maxCol - selectedRect.minCol + 1) * data.cellSizeCm).toFixed(0)} cm
+              {'  /  '}
+              實寬 {((selectedRect.maxRow - selectedRect.minRow + 1) * data.cellSizeCm).toFixed(0)} cm
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-wrap items-center gap-2.5">
           {/* 自訂每格公分數 */}
@@ -741,10 +1031,34 @@ export default function FloorPlanGridSection({
                   <Trash2 className="h-3 w-3" />
                   清空
                 </button>
+                <button
+                  type="button"
+                  onClick={handleMergeSelected}
+                  disabled={(data.rects ?? []).length < 2 && !selectedRect?.mergedFrom?.length}
+                  className="inline-flex items-center gap-1 rounded-lg border border-[#CBB5A5] bg-[#FFF8EE] px-2 py-1 text-[11px] font-bold text-[#3B312C] hover:bg-[#F5E6D5] disabled:opacity-40"
+                >
+                  <SquareDashed className="h-3 w-3" />
+                  {selectedRect?.mergedFrom?.length ? '拆解' : '合併'}
+                </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setToolMode('select');
+                  setIs3DTilt(false);
+                }}
+                className={`inline-flex items-center justify-center gap-1.5 rounded-xl border px-2.5 py-2 text-xs font-bold transition-colors ${
+                  toolMode === 'select'
+                    ? 'border-[#3B312C] bg-[#4A3F3A] text-[#F6BE6B]'
+                    : 'border-[#CBB5A5] bg-[#FFF8EE] text-[#3B312C] hover:bg-[#F5E6D5]'
+                }`}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                <span>選取拖移</span>
+              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -1013,7 +1327,11 @@ export default function FloorPlanGridSection({
                   onPointerCancel={handlePointerUp}
                   onPointerLeave={() => setHoverInfo(null)}
                   className={`block aspect-square w-full touch-none rounded border-2 border-slate-500 bg-slate-200 ${
-                    is3DTilt ? 'cursor-default' : 'cursor-crosshair'
+                    is3DTilt
+                      ? 'cursor-default'
+                      : toolMode === 'select'
+                      ? 'cursor-move'
+                      : 'cursor-crosshair'
                   }`}
                 />
               </div>

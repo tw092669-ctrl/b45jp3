@@ -78,12 +78,23 @@ export interface FloorPlanColorZone {
   color: string;
 }
 
+export interface FloorPlanRect {
+  id: string;
+  colorIdx: number;
+  minRow: number;
+  maxRow: number;
+  minCol: number;
+  maxCol: number;
+  mergedFrom?: FloorPlanRect[];
+}
+
 export interface FloorPlanData {
   gridSize: number; // default 80 (80x80)
   cellSizeCm: number; // default 20 (20cm per square)
   compassAngle: number; // 0-359 degrees
   palette: FloorPlanColorZone[]; // 8 customizable color zones
   cells: Record<string, number>; // "row,col" -> palette index (0..7)
+  rects?: FloorPlanRect[]; // Explicitly drawn rectangles; never auto-merges by color
 }
 
 export interface SiteSurveyRecord {
