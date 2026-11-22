@@ -19,7 +19,8 @@ import { getProductMainName } from '../utils/spacePlannerHelpers';
 
 const ENVIRONMENT_TYPES = ['內機', '暖氣', '冷氣'] as const;
 
-const formatProductPrice = (price: number) => (price > 0 ? price.toLocaleString() : '—');
+const formatProductDimension = (dimension: string) => dimension.replace(/\s*mm$/i, '');
+const formatProductPrice = (price: number) => (price > 0 ? `$${price.toLocaleString()}` : '—');
 
 interface BrandPriceLookupProps {
   products: HvacProduct[];
@@ -550,8 +551,8 @@ export default function BrandPriceLookup({
                       </div>
 
                       <div className="mt-1.5 grid grid-cols-2 gap-x-2 text-[10px] text-[#6E5C52]">
-                        <span className="truncate">內：{product.indoorDim}</span>
-                        <span className="truncate text-right">外：{product.outdoorDim}</span>
+                        <span className="truncate">內：{formatProductDimension(product.indoorDim)}</span>
+                        <span className="truncate text-right">外：{formatProductDimension(product.outdoorDim)}</span>
                       </div>
                     </div>
                   </div>
@@ -699,12 +700,12 @@ export default function BrandPriceLookup({
 
                       {/* 4. 內機尺寸 */}
                       <td className="font-mono-tabular px-3 py-3.5 align-middle text-xs text-[#6E5C52] whitespace-nowrap">
-                        {product.indoorDim}
+                        {formatProductDimension(product.indoorDim)}
                       </td>
 
                       {/* 5. 外機尺寸 */}
                       <td className="font-mono-tabular px-3 py-3.5 align-middle text-xs text-[#6E5C52] whitespace-nowrap">
-                        {product.outdoorDim}
+                        {formatProductDimension(product.outdoorDim)}
                       </td>
 
                       {/* 6. 單價 */}

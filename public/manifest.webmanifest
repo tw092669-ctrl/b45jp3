@@ -1,7 +1,9 @@
 {
   "name": "小隼空調助手ver_4",
   "short_name": "小隼空調",
-  "start_url": "/",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0B0922",
   "theme_color": "#0B0922",
