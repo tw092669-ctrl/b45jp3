@@ -78,9 +78,9 @@ export default function HomeDirectory({
       {/* 風格主視覺 Bento 歡迎看板（深可可底 + 奶油白卡片 + 蜜糖金點綴） */}
       <section className="bento-dark mb-4 overflow-hidden p-4 sm:mb-6 sm:p-7">
         <div className="grid grid-cols-1 items-center gap-4 sm:gap-6 lg:grid-cols-12">
-          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4 lg:col-span-8">
+          <div className="flex flex-row items-center gap-3 sm:gap-4 lg:col-span-8">
             <MascotBadge size="lg" />
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-[#F6BE6B] px-3 py-0.5 text-xs font-bold text-[#3B312C]">
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>小隼空調助手ver_4</span>

@@ -243,7 +243,7 @@ export default function BrandPriceLookup({
           {/* 左側：1~4 選擇按鈕 */}
           <div className="flex-1 space-y-2 sm:space-y-2.5">
             {/* 1. 品牌 (全部顯示並用顏色區分) */}
-            <div className="flex flex-wrap items-center gap-1">
+            <div className="flex flex-nowrap items-center gap-1 overflow-x-auto overscroll-x-contain touch-pan-x md:flex-wrap md:overflow-visible">
               <span className="w-12 shrink-0 text-[11px] font-bold text-[#6E5C52] sm:w-14 sm:text-xs">1. 品牌</span>
               <button
                 type="button"
@@ -278,7 +278,7 @@ export default function BrandPriceLookup({
             </div>
 
             {/* 2. 機型 */}
-            <div className="flex flex-wrap items-center gap-1">
+            <div className="flex flex-nowrap items-center gap-1 overflow-x-auto overscroll-x-contain touch-pan-x md:flex-wrap md:overflow-visible">
               <span className="w-12 shrink-0 text-[11px] font-bold text-[#6E5C52] sm:w-14 sm:text-xs">2. 機型</span>
               <button
                 type="button"
@@ -311,7 +311,7 @@ export default function BrandPriceLookup({
             </div>
 
             {/* 3. 環境 */}
-            <div className="flex flex-wrap items-center gap-1">
+            <div className="flex flex-nowrap items-center gap-1 overflow-x-auto overscroll-x-contain touch-pan-x md:flex-wrap md:overflow-visible">
               <span className="w-12 shrink-0 text-[11px] font-bold text-[#6E5C52] sm:w-14 sm:text-xs">3. 環境</span>
               {(['全部', ...ENVIRONMENT_TYPES] as const).map((environment) => (
                 <button
@@ -330,8 +330,8 @@ export default function BrandPriceLookup({
             </div>
 
             {/* 4. 種類 (整組 or 多聯) AND (變頻 or 定速) */}
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 sm:gap-x-4">
-              <div className="flex flex-wrap items-center gap-1">
+            <div className="flex flex-nowrap items-center gap-x-2 overflow-x-auto overscroll-x-contain touch-pan-x sm:gap-x-4 md:flex-wrap md:overflow-visible">
+              <div className="flex flex-nowrap shrink-0 items-center gap-1">
                 <span className="w-12 shrink-0 text-[11px] font-bold text-[#6E5C52] sm:w-14 sm:text-xs">4. 種類</span>
                 {(['全部', '整組', '多聯'] as const).map((opt) => (
                   <button
@@ -349,7 +349,7 @@ export default function BrandPriceLookup({
                 ))}
               </div>
 
-              <div className="flex flex-wrap items-center gap-1">
+              <div className="flex flex-nowrap shrink-0 items-center gap-1">
                 {(['全部', '變頻', '定速'] as const).map((opt) => (
                   <button
                     key={opt}
@@ -368,7 +368,7 @@ export default function BrandPriceLookup({
             </div>
 
             {/* 5. 階級 (品牌選擇後再篩選"備註"中的分類) */}
-            <div className="flex flex-wrap items-center gap-1">
+            <div className="flex flex-nowrap items-center gap-1 overflow-x-auto overscroll-x-contain touch-pan-x md:flex-wrap md:overflow-visible">
               <span className="w-12 shrink-0 text-[11px] font-bold text-[#6E5C52] sm:w-14 sm:text-xs">5. 階級</span>
               {selectedBrand === '全部' ? (
                 <span className="text-xs text-[#8E7A6E]">
