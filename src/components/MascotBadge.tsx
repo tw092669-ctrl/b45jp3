@@ -11,7 +11,7 @@ export default function MascotBadge({ size = 'sm' }: MascotBadgeProps) {
       aria-hidden="true"
     >
       <img
-        src="/assets/app-icon-192.png"
+        src="/assets/app-icon-512.png?v=20261122"
         alt=""
         className="h-full w-full object-cover"
         draggable={false}
