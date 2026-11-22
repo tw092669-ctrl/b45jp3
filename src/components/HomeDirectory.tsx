@@ -55,7 +55,7 @@ export default function HomeDirectory({
       title: '一對多室外機清單',
       subtitle: '室外機型號與室內機組合一覽',
       description:
-        '依附件整理日立一對多室外機型號、冷房容量及室內機級數組合，以清單方式快速查詢，涵蓋冷暖型與冷專型。',
+        '依附件整理一對多室外機型號、冷房容量及室內機級數組合，以品牌按鈕及 kW 遞增清單方式快速查詢，涵蓋冷暖型與冷專型。',
       statLabel: '支援 1對2 至 1對5 組合清單',
       icon: Layers,
       accentClass: 'text-[#FFF8EE] bg-[#D16047] border-[#B44C35]',
