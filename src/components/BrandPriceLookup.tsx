@@ -230,22 +230,22 @@ export default function BrandPriceLookup({
   };
 
   return (
-    <div className="mx-auto max-w-[1440px] px-4 pb-24 pt-5 sm:px-6">
+    <div className="mx-auto max-w-[1440px] px-3 pb-24 pt-3 sm:px-6 sm:pt-5">
       {/* 上方區塊：鎖定的固定式選擇按鈕 + 右側關鍵字搜尋 */}
       <section
         aria-label="固定式篩選與搜尋區"
-        className="bento-card lg:sticky lg:top-[57px] lg:z-20 p-4"
+        className="bento-card p-3 lg:sticky lg:top-[57px] lg:z-20 lg:p-4"
       >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-4">
           {/* 左側：1~4 選擇按鈕 */}
-          <div className="flex-1 space-y-2.5">
+          <div className="flex-1 space-y-2 sm:space-y-2.5">
             {/* 1. 品牌 (全部顯示並用顏色區分) */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="w-14 shrink-0 text-xs font-bold text-[#6E5C52]">1. 品牌</span>
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="w-12 shrink-0 text-[11px] font-bold text-[#6E5C52] sm:w-14 sm:text-xs">1. 品牌</span>
               <button
                 type="button"
                 onClick={() => handleSelectBrand('全部')}
-                className={`rounded-lg border px-2.5 py-1 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
+                className={`min-h-8 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors whitespace-nowrap shrink-0 sm:min-h-0 sm:px-2.5 sm:text-xs ${
                   selectedBrand === '全部'
                     ? 'border-[#3B312C] bg-[#4A3F3A] text-[#FFF8EE]'
                     : 'border-[#D2BEB0] bg-[#FFFDF9] text-[#4A3F3A] hover:bg-[#F5E6D5]'
@@ -262,7 +262,7 @@ export default function BrandPriceLookup({
                     key={brand}
                     type="button"
                     onClick={() => handleSelectBrand(isActive ? '全部' : brand)}
-                    className={`rounded-lg border px-2.5 py-1 text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
+                    className={`min-h-8 rounded-lg border px-2 py-1 text-[11px] font-semibold transition-all whitespace-nowrap shrink-0 sm:min-h-0 sm:px-2.5 sm:text-xs ${
                       isActive
                         ? `${theme.activeBg} ${theme.activeText} border-transparent ring-2 ${theme.activeRing}`
                         : `${theme.bg} ${theme.text} ${theme.border}`
@@ -275,12 +275,12 @@ export default function BrandPriceLookup({
             </div>
 
             {/* 2. 機型 */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="w-14 shrink-0 text-xs font-bold text-[#6E5C52]">2. 機型</span>
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="w-12 shrink-0 text-[11px] font-bold text-[#6E5C52] sm:w-14 sm:text-xs">2. 機型</span>
               <button
                 type="button"
                 onClick={() => setSelectedModelType('全部')}
-                className={`rounded-lg border px-2.5 py-1 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
+                className={`min-h-8 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors whitespace-nowrap shrink-0 sm:min-h-0 sm:px-2.5 sm:text-xs ${
                   selectedModelType === '全部'
                     ? 'border-[#C68934] bg-[#F6BE6B] text-[#3B312C]'
                     : 'border-[#DFCBB9] bg-[#F6E9DA] text-[#5C4F49] hover:bg-[#EED9C4]'
@@ -295,7 +295,7 @@ export default function BrandPriceLookup({
                     key={type}
                     type="button"
                     onClick={() => setSelectedModelType(isActive ? '全部' : type)}
-                    className={`rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 ${
+                    className={`min-h-8 rounded-lg border px-2 py-1 text-[11px] font-semibold transition-colors whitespace-nowrap shrink-0 sm:min-h-0 sm:px-2.5 sm:text-xs ${
                       isActive
                         ? 'border-[#C68934] bg-[#F6BE6B] text-[#3B312C]'
                         : 'border-[#DFCBB9] bg-[#F6E9DA] text-[#5C4F49] hover:bg-[#EED9C4]'
@@ -308,14 +308,14 @@ export default function BrandPriceLookup({
             </div>
 
             {/* 3. 環境 */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="w-14 shrink-0 text-xs font-bold text-[#6E5C52]">3. 環境</span>
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="w-12 shrink-0 text-[11px] font-bold text-[#6E5C52] sm:w-14 sm:text-xs">3. 環境</span>
               {(['全部', ...ENVIRONMENT_TYPES] as const).map((environment) => (
                 <button
                   key={environment}
                   type="button"
                   onClick={() => setSelectedEnvironment(environment)}
-                  className={`rounded-lg border px-2.5 py-1 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
+                  className={`min-h-8 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors whitespace-nowrap shrink-0 sm:min-h-0 sm:px-2.5 sm:text-xs ${
                     selectedEnvironment === environment
                       ? 'border-[#C68934] bg-[#F6BE6B] text-[#3B312C]'
                       : 'border-[#DFCBB9] bg-[#F6E9DA] text-[#5C4F49] hover:bg-[#EED9C4]'
@@ -327,15 +327,15 @@ export default function BrandPriceLookup({
             </div>
 
             {/* 4. 種類 (整組 or 多聯) AND (變頻 or 定速) */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="w-14 shrink-0 text-xs font-bold text-[#6E5C52]">4. 種類</span>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 sm:gap-x-4">
+              <div className="flex flex-wrap items-center gap-1">
+                <span className="w-12 shrink-0 text-[11px] font-bold text-[#6E5C52] sm:w-14 sm:text-xs">4. 種類</span>
                 {(['全部', '整組', '多聯'] as const).map((opt) => (
                   <button
                     key={opt}
                     type="button"
                     onClick={() => setSelectedSetType(opt)}
-                    className={`rounded-lg border px-2.5 py-1 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
+                    className={`min-h-8 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors whitespace-nowrap shrink-0 sm:min-h-0 sm:px-2.5 sm:text-xs ${
                       selectedSetType === opt
                         ? 'border-[#3B312C] bg-[#4A3F3A] text-[#FFF8EE]'
                         : 'border-[#DFCBB9] bg-[#F6E9DA] text-[#5C4F49] hover:bg-[#EED9C4]'
@@ -346,13 +346,13 @@ export default function BrandPriceLookup({
                 ))}
               </div>
 
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1">
                 {(['全部', '變頻', '定速'] as const).map((opt) => (
                   <button
                     key={opt}
                     type="button"
                     onClick={() => setSelectedInverter(opt)}
-                    className={`rounded-lg border px-2.5 py-1 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
+                    className={`min-h-8 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors whitespace-nowrap shrink-0 sm:min-h-0 sm:px-2.5 sm:text-xs ${
                       selectedInverter === opt
                         ? 'border-[#3C634F] bg-[#4E7C64] text-[#FFF8EE]'
                         : 'border-[#DFCBB9] bg-[#F6E9DA] text-[#5C4F49] hover:bg-[#EED9C4]'
@@ -365,8 +365,8 @@ export default function BrandPriceLookup({
             </div>
 
             {/* 5. 階級 (品牌選擇後再篩選"備註"中的分類) */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="w-14 shrink-0 text-xs font-bold text-[#6E5C52]">5. 階級</span>
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="w-12 shrink-0 text-[11px] font-bold text-[#6E5C52] sm:w-14 sm:text-xs">5. 階級</span>
               {selectedBrand === '全部' ? (
                 <span className="text-xs text-[#8E7A6E]">
                   請先於上方點選「品牌」，即會展開該品牌「備註」中的階級分類按鈕
@@ -376,7 +376,7 @@ export default function BrandPriceLookup({
                   <button
                     type="button"
                     onClick={() => setSelectedGrade('全部')}
-                    className={`rounded-lg border px-2.5 py-1 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
+                    className={`min-h-8 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors whitespace-nowrap shrink-0 sm:min-h-0 sm:px-2.5 sm:text-xs ${
                       selectedGrade === '全部'
                         ? 'border-[#A84732] bg-[#D16047] text-[#FFF8EE]'
                         : 'border-[#DFCBB9] bg-[#F6E9DA] text-[#5C4F49] hover:bg-[#EED9C4]'
@@ -391,7 +391,7 @@ export default function BrandPriceLookup({
                         key={grade}
                         type="button"
                         onClick={() => setSelectedGrade(isActive ? '全部' : grade)}
-                        className={`rounded-lg border px-2.5 py-1 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
+                        className={`min-h-8 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors whitespace-nowrap shrink-0 sm:min-h-0 sm:px-2.5 sm:text-xs ${
                           isActive
                             ? 'border-[#A84732] bg-[#D16047] text-[#FFF8EE]'
                             : 'border-[#E6BE8A] bg-[#FDF1DB] text-[#7D4B16] hover:bg-[#FAE4BE]'
@@ -407,7 +407,7 @@ export default function BrandPriceLookup({
           </div>
 
           {/* 右側：6. 無順序不限大小寫關鍵字搜尋 + 匯入附件 */}
-          <div className="w-full shrink-0 space-y-2.5 border-t border-[#E6D3C3] pt-3 lg:w-80 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+          <div className="w-full shrink-0 space-y-2 border-t border-[#E6D3C3] pt-2 sm:space-y-2.5 lg:w-80 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8E7A6E]" />
               <input
@@ -415,7 +415,7 @@ export default function BrandPriceLookup({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="關鍵字搜尋 (如: 28 日立 頂級)"
-                className="w-full rounded-xl border-2 border-[#D2BEB0] bg-[#F6E9DA] py-2 pl-9 pr-8 text-sm text-[#3B312C] placeholder:text-[#8E7A6E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none"
+                className="w-full rounded-xl border-2 border-[#D2BEB0] bg-[#F6E9DA] py-2 pl-9 pr-8 text-[13px] text-[#3B312C] placeholder:text-[#8E7A6E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none sm:text-sm"
               />
               {searchQuery && (
                 <button
@@ -440,7 +440,7 @@ export default function BrandPriceLookup({
                 <button
                   type="button"
                   onClick={resetAllFilters}
-                  className="inline-flex items-center gap-1 rounded-lg border border-[#D2BEB0] bg-[#FFFDF9] px-2.5 py-1 text-xs font-semibold text-[#5C4F49] hover:bg-[#F5E6D5] whitespace-nowrap shrink-0"
+                  className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-[#D2BEB0] bg-[#FFFDF9] px-2 py-1 text-[11px] font-semibold text-[#5C4F49] hover:bg-[#F5E6D5] whitespace-nowrap shrink-0 sm:min-h-0 sm:px-2.5 sm:text-xs"
                 >
                   <FilterX className="h-3.5 w-3.5" />
                   重設
@@ -451,7 +451,7 @@ export default function BrandPriceLookup({
                     setImportMessage(null);
                     setShowImportModal(true);
                   }}
-                  className="inline-flex items-center gap-1 rounded-lg border border-[#C68934] bg-[#F6BE6B] px-2.5 py-1 text-xs font-bold text-[#3B312C] hover:bg-[#F3AF48] whitespace-nowrap shrink-0"
+                  className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-[#C68934] bg-[#F6BE6B] px-2 py-1 text-[11px] font-bold text-[#3B312C] hover:bg-[#F3AF48] whitespace-nowrap shrink-0 sm:min-h-0 sm:px-2.5 sm:text-xs"
                 >
                   <Upload className="h-3.5 w-3.5" />
                   匯入價目附件
@@ -464,7 +464,102 @@ export default function BrandPriceLookup({
 
       {/* 下方區塊：產品清單式顯示 (左到右：勾選、名稱、管徑、內機尺寸、外機尺寸、單價) */}
       <section aria-label="產品清單" className="bento-card mt-4 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-[#EAD9C8] md:hidden">
+          {filteredProducts.length === 0 ? (
+            <div className="px-4 py-10 text-center">
+              <p className="text-sm font-bold text-[#3B312C]">找不到符合條件的空調機型</p>
+              <button
+                type="button"
+                onClick={resetAllFilters}
+                className="mt-3 rounded-lg border border-[#4A3F3A] bg-[#F6BE6B] px-3 py-1.5 text-xs font-bold text-[#3B312C]"
+              >
+                顯示全部機型
+              </button>
+            </div>
+          ) : (
+            filteredProducts.map((product) => {
+              const isChecked = selectedIdSet.has(product.id);
+              const brandTheme = getBrandTheme(product.brand);
+              const isHeating = product.climateMode === '冷暖';
+              const isCopied = copiedId === product.id;
+              return (
+                <div
+                  key={product.id}
+                  className={`px-3 py-2.5 ${isChecked ? 'bg-[#FDF0D5]' : 'bg-[#FFF8EE]'}`}
+                >
+                  <div className="flex items-start gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onToggleQuoteItem(product)}
+                      aria-label={`勾選 ${getProductMainName(product.name)}`}
+                      className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${
+                        isChecked
+                          ? 'border-[#3B312C] bg-[#F6BE6B] text-[#3B312C]'
+                          : 'border-[#CBB5A5] bg-[#FFFDF9] text-transparent'
+                      }`}
+                    >
+                      <Check className="h-3.5 w-3.5 stroke-[2.5]" />
+                    </button>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="mb-1 flex flex-wrap gap-1">
+                            <span className={`rounded px-1 py-0.5 text-[10px] font-bold ${brandTheme.badgeBg} ${brandTheme.badgeText}`}>
+                              {product.brand}
+                            </span>
+                            <span className="rounded bg-[#F2E2D1] px-1 py-0.5 text-[10px] font-semibold text-[#5C4F49]">
+                              {product.modelType}
+                            </span>
+                            {product.grade && (
+                              <span className="rounded bg-[#FDF1DB] px-1 py-0.5 text-[10px] font-bold text-[#9C5B18]">
+                                {product.grade}
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyName(product)}
+                            className="flex min-w-0 items-center gap-1 text-left"
+                          >
+                            {isHeating ? (
+                              <Sun className="h-3.5 w-3.5 shrink-0 text-[#D16047]" />
+                            ) : (
+                              <Snowflake className="h-3.5 w-3.5 shrink-0 text-[#2F6E94]" />
+                            )}
+                            <span className="truncate text-xs font-extrabold text-[#3B312C]">
+                              {getProductMainName(product.name)}
+                            </span>
+                            {isCopied ? (
+                              <Check className="h-3 w-3 shrink-0 text-[#3B6851]" />
+                            ) : (
+                              <Copy className="h-3 w-3 shrink-0 text-[#8E7A6E]" />
+                            )}
+                          </button>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <div className="font-mono-tabular text-xs font-extrabold text-[#3B312C]">
+                            NT$ {product.price.toLocaleString()}
+                          </div>
+                          <div className="mt-1 text-[10px] font-semibold text-[#6E5C52]">
+                            {product.pipeSize}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-1.5 grid grid-cols-2 gap-x-2 text-[10px] text-[#6E5C52]">
+                        <span className="truncate">內：{product.indoorDim}</span>
+                        <span className="truncate text-right">外：{product.outdoorDim}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[920px] border-collapse text-left">
             <thead>
               <tr className="border-b-2 border-[#D2BEB0] bg-[#F5E6D5] text-xs font-bold text-[#4A3F3A]">
@@ -624,12 +719,12 @@ export default function BrandPriceLookup({
       </section>
 
       {/* 右下浮動按鈕區：「製作報價單」與「空間規劃」 */}
-      <div className="fixed bottom-6 right-6 z-30 flex flex-col items-end gap-2.5">
+      <div className="fixed bottom-3 right-3 z-30 flex flex-col items-end gap-2 sm:bottom-6 sm:right-6">
         {quoteItems.length > 0 && (
           <button
             type="button"
             onClick={onOpenQuotePage}
-            className="inline-flex items-center gap-2.5 rounded-full border-2 border-[#3B312C] bg-[#4A3F3A] px-5 py-3 text-sm font-bold text-[#FFF8EE] shadow-[0_4px_0_rgba(59,49,44,0.3)] transition-transform duration-150 hover:scale-[1.03] hover:bg-[#3E3430]"
+            className="inline-flex items-center gap-1.5 rounded-full border-2 border-[#3B312C] bg-[#4A3F3A] px-3 py-2 text-xs font-bold text-[#FFF8EE] shadow-[0_4px_0_rgba(59,49,44,0.3)] transition-transform duration-150 hover:scale-[1.03] hover:bg-[#3E3430] sm:gap-2.5 sm:px-5 sm:py-3 sm:text-sm"
           >
             <ShoppingBag className="h-4 w-4 text-[#F6BE6B]" />
             <span>製作報價單</span>
@@ -642,7 +737,7 @@ export default function BrandPriceLookup({
         <button
           type="button"
           onClick={onOpenSpacePlanning}
-          className="inline-flex items-center gap-2.5 rounded-full border-2 border-[#3B312C] bg-[#F6BE6B] px-5 py-3 text-sm font-extrabold text-[#3B312C] shadow-[0_4px_0_rgba(59,49,44,0.3)] transition-transform duration-150 hover:scale-[1.03] hover:bg-[#F3AF48]"
+          className="inline-flex items-center gap-1.5 rounded-full border-2 border-[#3B312C] bg-[#F6BE6B] px-3 py-2 text-xs font-extrabold text-[#3B312C] shadow-[0_4px_0_rgba(59,49,44,0.3)] transition-transform duration-150 hover:scale-[1.03] hover:bg-[#F3AF48] sm:gap-2.5 sm:px-5 sm:py-3 sm:text-sm"
         >
           <LayoutGrid className="h-4 w-4 text-[#3B312C]" />
           <span>空間規劃</span>
