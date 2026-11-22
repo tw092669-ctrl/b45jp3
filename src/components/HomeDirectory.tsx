@@ -52,7 +52,7 @@ export default function HomeDirectory({
     {
       id: 'multisplit',
       index: '03',
-      title: '一對多室外機清單',
+      title: '多聯組合表',
       subtitle: '室外機型號與室內機組合一覽',
       description:
         '依附件整理一對多室外機型號、冷房容量及室內機級數組合，以品牌按鈕及 kW 遞增清單方式快速查詢，涵蓋冷暖型與冷專型。',

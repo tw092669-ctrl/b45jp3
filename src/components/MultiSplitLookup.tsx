@@ -29,7 +29,7 @@ export default function MultiSplitLookup() {
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#4A3F3A] text-[#F6BE6B]">
                 <Layers className="h-4 w-4" />
               </span>
-              <h1 className="text-lg font-extrabold text-[#3B312C]">一對多室外機組合清單</h1>
+              <h1 className="text-lg font-extrabold text-[#3B312C]">多聯組合表</h1>
             </div>
             <p className="mt-1 text-xs font-medium text-[#7A675B]">
               室外機型號、額定冷房能力與室內機級數組合；清單依 kW 能力遞增排列
