@@ -381,7 +381,7 @@ export default function App() {
         label: room.area || `空間 #${idx + 1}`,
         pipeGauge: guessedGauge,
         lengthM: totalPipe > 0 ? Number(totalPipe.toFixed(1)) : '',
-        signalCableType: '2C隔離線',
+        signalCableType: '1.25*4C訊號線',
         signalCableLengthM: '',
         powerCableType: '2.0mm電源線',
         powerCableLengthM: '',
