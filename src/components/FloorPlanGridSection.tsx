@@ -499,14 +499,21 @@ export default function FloorPlanGridSection({
       if (!canvas) return null;
       const rect = canvas.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return null;
-      const x = ((clientX - rect.left) / rect.width) * data.gridSize;
-      const y = ((clientY - rect.top) / rect.height) * data.gridSize;
+      const center = data.gridSize / 2;
+      const displayX = ((clientX - rect.left) / rect.width) * data.gridSize - center;
+      const displayY = ((clientY - rect.top) / rect.height) * data.gridSize - center;
+      const angle = (data.compassAngle * Math.PI) / 180;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      const fitScale = 1 / (Math.abs(cos) + Math.abs(sin));
+      const x = center + (displayX * cos + displayY * sin) / fitScale;
+      const y = center + (-displayX * sin + displayY * cos) / fitScale;
       const col = Math.floor(x);
       const row = Math.floor(y);
       if (row < 0 || col < 0 || row >= data.gridSize || col >= data.gridSize) return null;
       return { row, col };
     },
-    [data.gridSize]
+    [data.compassAngle, data.gridSize]
   );
 
   const pushHistory = (snapshot: FloorPlanData) => {
@@ -995,19 +1002,22 @@ export default function FloorPlanGridSection({
   };
 
   const totalSideM = ((data.gridSize * data.cellSizeCm) / 100).toFixed(1);
+  const compassRadians = (data.compassAngle * Math.PI) / 180;
+  const canvasFitScale =
+    1 / (Math.abs(Math.cos(compassRadians)) + Math.abs(Math.sin(compassRadians)));
 
   return (
     <section
       aria-label="場地立體平面方格繪圖與坪數估算"
-      className="bento-card mt-8 p-5"
+      className="bento-card mt-5 p-3 sm:mt-8 sm:p-5"
     >
       {/* 標題與格距、工具控制列 */}
-      <div className="flex flex-col gap-4 border-b border-[#E8D8C8] pb-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 border-b border-[#E8D8C8] pb-3 sm:gap-4 sm:pb-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 className="text-base font-extrabold text-[#3B312C]">
             平面空間立體方格圖（{data.gridSize} × {data.gridSize} 格）
           </h2>
-          <p className="mt-0.5 text-xs text-[#7A675B]">
+          <p className="mt-0.5 line-clamp-2 text-[11px] text-[#7A675B] sm:line-clamp-none sm:text-xs">
             框選矩形後可拖移、調整長寬；相同顏色矩形會獨立保留，按「合併」會依實際格位聯集形成不規則多邊形，再按一次即拆解。坪數依實際著色格數計算：面積(cm²) ÷ 32,400（取至小數點後 1 位）。
           </p>
         </div>
@@ -1109,11 +1119,11 @@ export default function FloorPlanGridSection({
       </div>
 
       {/* 主工作區：桌面版畫布在左、8 色與繪圖工具在右側；窄螢幕則依序堆疊 */}
-      <div className="mt-5 grid grid-cols-1 gap-6 xl:grid-cols-12">
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:mt-5 sm:gap-6 xl:grid-cols-12">
         {/* 桌面版右側控制欄：繪圖模式 + 8 色選擇與編輯名稱 + 坪數統計 */}
-        <div className="order-2 space-y-4 xl:order-2 xl:col-span-4">
+        <div className="order-2 space-y-3 sm:space-y-4 xl:order-2 xl:col-span-4">
           {/* 操作模式工具 */}
-          <div className="rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] p-3">
+          <div className="rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] p-2.5 sm:p-3">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xs font-bold text-[#3B312C]">選取與繪圖工具</span>
               <div className="flex items-center gap-1.5">
@@ -1217,7 +1227,7 @@ export default function FloorPlanGridSection({
           </div>
 
           {/* 8 種顏色選擇 + 可編輯名稱 + 坪數顯示 */}
-          <div className="rounded-xl border border-[#DFCBB9] bg-[#FFFDF9] p-3.5">
+          <div className="rounded-xl border border-[#DFCBB9] bg-[#FFFDF9] p-2.5 sm:p-3.5">
             <div className="mb-2.5 flex items-center justify-between">
               <span className="text-xs font-bold text-[#3B312C]">8 色空間分區（點擊選色，可編輯名稱）</span>
               <span className="font-mono-tabular text-xs font-extrabold text-[#B36B16]">
@@ -1305,9 +1315,9 @@ export default function FloorPlanGridSection({
 
         {/* 左側：灰底棋盤式立體表格 + 簡易可旋轉指南針 */}
         <div className="order-1 xl:order-1 xl:col-span-8">
-          <div className="relative rounded-2xl border-2 border-[#CBB5A5] bg-[#F5E6D5]/70 p-3 sm:p-4">
+          <div className="relative rounded-2xl border-2 border-[#CBB5A5] bg-[#F5E6D5]/70 p-2 sm:p-4">
             {/* 頂部即時狀態列 */}
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-[11px] sm:mb-3 sm:text-xs">
               <div className="font-mono-tabular flex flex-wrap items-center gap-3 text-[#3B312C]">
                 <span className="font-semibold">
                   1 格 = {data.cellSizeCm}×{data.cellSizeCm} cm ({(cellAreaCm2 / 32400).toFixed(4)} 坪)
@@ -1343,19 +1353,16 @@ export default function FloorPlanGridSection({
             </div>
 
             {/* 棋盤畫布外框（支援 3D 斜角透視檢視） */}
-            <div className="relative flex justify-center overflow-hidden rounded-xl border border-[#DFCBB9] bg-slate-300/60 p-2 sm:p-4">
+            <div className="relative flex justify-center overflow-hidden rounded-xl border border-[#DFCBB9] bg-slate-300/60 p-1.5 sm:p-4">
               {/* 簡易指南針（點擊可旋轉編輯） */}
               <div className="absolute right-4 top-4 z-20 flex flex-col items-end">
                 <button
                   type="button"
                   onClick={() => setShowCompassEditor((prev) => !prev)}
-                  title="點擊指南針進行旋轉編輯"
+                  title="點擊調整畫布旋轉角度"
                   className="group relative flex h-16 w-16 flex-col items-center justify-center rounded-full border-2 border-[#4A3F3A] bg-[#FFF8EE]/95 shadow-md transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-[#D9822B]"
                 >
-                  <div
-                    className="relative flex h-12 w-12 items-center justify-center transition-transform duration-150"
-                    style={{ transform: `rotate(${data.compassAngle}deg)` }}
-                  >
+                  <div className="relative flex h-12 w-12 items-center justify-center">
                     <span className="absolute -top-0.5 text-[9px] font-extrabold text-[#D16047]">
                       北
                     </span>
@@ -1372,7 +1379,7 @@ export default function FloorPlanGridSection({
                   </div>
                 </button>
                 <span className="font-mono-tabular mt-1 rounded-md bg-[#4A3F3A]/90 px-1.5 py-0.5 text-[10px] font-bold text-[#F6BE6B]">
-                  點此旋轉 {data.compassAngle}°
+                  畫布 {data.compassAngle}° · 點此調整
                 </span>
 
                 {/* 指南針旋轉編輯彈窗：僅保留拖曳角度調整 */}
@@ -1435,6 +1442,9 @@ export default function FloorPlanGridSection({
                   onPointerUp={handlePointerUp}
                   onPointerCancel={handlePointerUp}
                   onPointerLeave={() => setHoverInfo(null)}
+                  style={{
+                    transform: `rotate(${data.compassAngle}deg) scale(${canvasFitScale})`,
+                  }}
                   className={`block aspect-square w-full touch-none rounded border-2 border-slate-500 bg-slate-200 ${
                     is3DTilt
                       ? 'cursor-default'

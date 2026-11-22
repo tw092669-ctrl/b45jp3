@@ -387,16 +387,23 @@ export default function SiteSurveyRecord({
       const fpSize = 500;
       const fpX = 32;
       const fpY = fpStartY + 52;
+      const rotation = (fp.compassAngle * Math.PI) / 180;
+      const fitScale = 1 / (Math.abs(Math.cos(rotation)) + Math.abs(Math.sin(rotation)));
       ctx.save();
       ctx.translate(fpX, fpY);
+      ctx.translate(fpSize / 2, fpSize / 2);
+      ctx.rotate(rotation);
+      ctx.scale(fitScale, fitScale);
+      ctx.translate(-fpSize / 2, -fpSize / 2);
       renderFloorPlanCanvas(ctx, fpSize, fpSize, fp);
       ctx.strokeStyle = '#64748B';
       ctx.lineWidth = 1.5;
       ctx.strokeRect(0, 0, fpSize, fpSize);
+      ctx.restore();
 
       // Draw compact compass badge on exported image
       ctx.save();
-      ctx.translate(fpSize - 42, 42);
+      ctx.translate(fpX + fpSize - 42, fpY + 42);
       ctx.fillStyle = 'rgba(255,255,255,0.92)';
       ctx.beginPath();
       ctx.arc(0, 0, 26, 0, Math.PI * 2);
@@ -404,7 +411,6 @@ export default function SiteSurveyRecord({
       ctx.strokeStyle = '#334155';
       ctx.lineWidth = 1.5;
       ctx.stroke();
-      ctx.rotate((fp.compassAngle * Math.PI) / 180);
       ctx.fillStyle = '#E11D48';
       ctx.beginPath();
       ctx.moveTo(0, -16);
@@ -423,7 +429,6 @@ export default function SiteSurveyRecord({
       ctx.font = 'bold 10px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('北', 0, -18);
-      ctx.restore();
       ctx.restore();
 
       // Zone ping breakdown next to floorplan
@@ -473,10 +478,10 @@ export default function SiteSurveyRecord({
   };
 
   return (
-    <div className="mx-auto max-w-[1440px] px-4 pb-24 pt-5 sm:px-6">
+    <div className="mx-auto max-w-[1440px] px-3 pb-24 pt-3 sm:px-6 sm:pt-5">
       {/* 案場快速切換列 */}
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-1.5">
+      <div className="mb-2 flex flex-col gap-1.5 sm:mb-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain touch-pan-x sm:flex-wrap sm:overflow-visible">
           {surveys.map((s) => {
             const isActive = s.id === activeSurvey.id;
             return (
@@ -484,7 +489,7 @@ export default function SiteSurveyRecord({
                 <button
                   type="button"
                   onClick={() => onSelectSurvey(s.id)}
-                  className={`rounded-xl border-2 px-3.5 py-1.5 text-xs font-bold transition-colors whitespace-nowrap ${
+                  className={`rounded-xl border-2 px-2.5 py-1.5 text-xs font-bold transition-colors whitespace-nowrap sm:px-3.5 ${
                     isActive
                       ? 'border-[#3B312C] bg-[#4A3F3A] text-[#F6BE6B] shadow-[0_2px_0_rgba(59,49,44,0.2)]'
                       : 'border-[#CBB5A5] bg-[#FFF8EE] text-[#3B312C] hover:bg-[#F5E6D5]'
@@ -498,19 +503,19 @@ export default function SiteSurveyRecord({
           <button
             type="button"
             onClick={onCreateSurvey}
-            className="inline-flex items-center gap-1 rounded-xl border-2 border-dashed border-[#CBB5A5] bg-[#FFF8EE]/80 px-3 py-1.5 text-xs font-bold text-[#7A675B] hover:border-[#D9822B] hover:text-[#3B312C] whitespace-nowrap"
+            className="inline-flex shrink-0 items-center gap-1 rounded-xl border-2 border-dashed border-[#CBB5A5] bg-[#FFF8EE]/80 px-2.5 py-1.5 text-xs font-bold text-[#7A675B] hover:border-[#D9822B] hover:text-[#3B312C] whitespace-nowrap sm:px-3"
           >
             <FolderPlus className="h-3.5 w-3.5" />
             新案場
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex max-w-full items-center gap-1.5 overflow-x-auto overscroll-x-contain sm:gap-2 sm:overflow-visible">
           {onSendToPiping && (
             <button
               type="button"
               onClick={() => onSendToPiping(activeSurvey)}
-              className="rounded-xl border-2 border-[#C68934] bg-[#F6BE6B] px-3.5 py-1.5 text-xs font-bold text-[#3B312C] shadow-[0_2px_0_rgba(59,49,44,0.16)] hover:bg-[#F3AF48] whitespace-nowrap"
+              className="shrink-0 rounded-xl border-2 border-[#C68934] bg-[#F6BE6B] px-2.5 py-1.5 text-xs font-bold text-[#3B312C] shadow-[0_2px_0_rgba(59,49,44,0.16)] hover:bg-[#F3AF48] whitespace-nowrap sm:px-3.5"
             >
               帶入管路計算系統
             </button>
@@ -528,7 +533,7 @@ export default function SiteSurveyRecord({
                   },
                 })
               }
-              className="rounded-xl border-2 border-[#E6B0A3] bg-[#FDECE7] px-3 py-1.5 text-xs font-bold text-[#A43B24] hover:bg-[#FAD7CD] whitespace-nowrap"
+              className="shrink-0 rounded-xl border-2 border-[#E6B0A3] bg-[#FDECE7] px-2.5 py-1.5 text-xs font-bold text-[#A43B24] hover:bg-[#FAD7CD] whitespace-nowrap sm:px-3"
             >
               刪除此案場
             </button>
@@ -539,12 +544,12 @@ export default function SiteSurveyRecord({
       {/* 上方固定顯示區塊：建案or地址、設計師、美化管槽、牆體洗孔、切溝鑿牆 + 右上匯出 */}
       <section
         aria-label="案場基本資料與施作勾選"
-        className="bento-card lg:sticky lg:top-[64px] lg:z-20 p-4 backdrop-blur-sm"
+        className="bento-card p-3 backdrop-blur-sm sm:p-4 lg:sticky lg:top-[64px] lg:z-20"
       >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
+        <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="grid flex-1 grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-12">
             {/* 建案 or 地址 */}
-            <div className="lg:col-span-5">
+            <div className="col-span-2 lg:col-span-5">
               <label className="mb-1 block text-xs font-bold text-[#7A675B]">
                 建案 or 地址
               </label>
@@ -553,7 +558,7 @@ export default function SiteSurveyRecord({
                 value={activeSurvey.projectOrAddress}
                 onChange={(e) => updateField('projectOrAddress', e.target.value)}
                 placeholder="輸入建案名稱或工地地址"
-                className="w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-3 py-2 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none"
+                className="w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-2.5 py-1.5 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none sm:px-3 sm:py-2"
               />
             </div>
 
@@ -565,12 +570,12 @@ export default function SiteSurveyRecord({
                 value={activeSurvey.designer}
                 onChange={(e) => updateField('designer', e.target.value)}
                 placeholder="輸入設計師 / 聯絡人"
-                className="w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-3 py-2 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none"
+                className="w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-2.5 py-1.5 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none sm:px-3 sm:py-2"
               />
             </div>
 
             {/* 美化管槽、牆體洗孔、切溝鑿牆 (用框框打勾) */}
-            <div className="flex flex-wrap items-end gap-4 sm:col-span-2 lg:col-span-4 lg:pb-1.5">
+            <div className="col-span-2 flex flex-wrap items-end gap-x-3 gap-y-2 sm:col-span-2 sm:gap-4 lg:col-span-4 lg:pb-1.5">
               {(
                 [
                   { key: 'ductBeautification', label: '美化管槽' },
@@ -582,7 +587,7 @@ export default function SiteSurveyRecord({
                 return (
                   <label
                     key={key}
-                    className="inline-flex cursor-pointer select-none items-center gap-2 text-sm font-bold text-[#3B312C]"
+                    className="inline-flex cursor-pointer select-none items-center gap-1.5 text-xs font-bold text-[#3B312C] sm:gap-2 sm:text-sm"
                   >
                     <input
                       type="checkbox"
@@ -591,13 +596,13 @@ export default function SiteSurveyRecord({
                       className="sr-only"
                     />
                     <span
-                      className={`inline-flex h-5 w-5 items-center justify-center rounded-md border-2 transition-colors ${
+                      className={`inline-flex h-4 w-4 items-center justify-center rounded-md border-2 transition-colors sm:h-5 sm:w-5 ${
                         checked
                           ? 'border-[#3B312C] bg-[#4E7C64] text-[#FFF8EE]'
                           : 'border-[#B89F8D] bg-[#FFFDF9] text-transparent'
                       }`}
                     >
-                      <Check className="h-3.5 w-3.5 stroke-[3]" />
+                      <Check className="h-3 w-3 stroke-[3] sm:h-3.5 sm:w-3.5" />
                     </span>
                     <span className="whitespace-nowrap">{label}</span>
                   </label>
@@ -611,7 +616,7 @@ export default function SiteSurveyRecord({
             <button
               type="button"
               onClick={() => setShowExportMenu((prev) => !prev)}
-              className="inline-flex items-center gap-2 rounded-xl border border-[#3B312C] bg-[#4A3F3A] px-4 py-2.5 text-sm font-bold text-[#F6BE6B] shadow-[0_2px_0_rgba(59,49,44,0.2)] transition-colors hover:bg-[#3B312C] whitespace-nowrap"
+              className="inline-flex items-center gap-2 rounded-xl border border-[#3B312C] bg-[#4A3F3A] px-3 py-2 text-sm font-bold text-[#F6BE6B] shadow-[0_2px_0_rgba(59,49,44,0.2)] transition-colors hover:bg-[#3B312C] whitespace-nowrap sm:px-4 sm:py-2.5"
             >
               <Share2 className="h-4 w-4" />
               <span>匯出</span>
@@ -654,15 +659,15 @@ export default function SiteSurveyRecord({
       </section>
 
       {/* 下方：可自行輸入文字的泡泡群組 */}
-      <section aria-label="案場紀錄清單列表" className="mt-5 space-y-4">
+      <section aria-label="案場紀錄清單列表" className="mt-3 space-y-3 sm:mt-5 sm:space-y-4">
         {activeSurvey.rooms.map((room, index) => (
           <div
             key={room.id}
-            className="bento-card p-5 transition-colors hover:border-[#B69D8B]"
+            className="bento-card p-3 transition-colors hover:border-[#B69D8B] sm:p-5"
           >
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-[#E8D8C8] pb-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-[#E8D8C8] pb-2 sm:mb-4 sm:pb-3">
               <div className="flex items-center gap-2.5">
-                <span className="font-mono-tabular inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#3B312C] bg-[#4A3F3A] text-xs font-bold text-[#F6BE6B]">
+                <span className="font-mono-tabular inline-flex h-6 w-6 items-center justify-center rounded-lg border border-[#3B312C] bg-[#4A3F3A] text-xs font-bold text-[#F6BE6B] sm:h-7 sm:w-7">
                   {index + 1}
                 </span>
                 <span className="text-sm font-bold text-[#3B312C]">
@@ -671,11 +676,11 @@ export default function SiteSurveyRecord({
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <button
                   type="button"
                   onClick={() => duplicateRoom(room)}
-                  className="inline-flex items-center gap-1 rounded-xl border border-[#CBB5A5] bg-[#F6E9DA] px-2.5 py-1 text-xs font-bold text-[#3B312C] hover:bg-[#EAD6C2]"
+                  className="inline-flex items-center gap-1 rounded-xl border border-[#CBB5A5] bg-[#F6E9DA] px-2 py-1 text-xs font-bold text-[#3B312C] hover:bg-[#EAD6C2] sm:px-2.5"
                 >
                   <Download className="h-3 w-3 rotate-180" />
                   複製一組
@@ -693,7 +698,7 @@ export default function SiteSurveyRecord({
                         },
                       })
                     }
-                    className="inline-flex items-center gap-1 rounded-xl border border-[#E6B0A3] bg-[#FDECE7] px-2.5 py-1 text-xs font-bold text-[#A43B24] hover:bg-[#FAD7CD]"
+                    className="inline-flex items-center gap-1 rounded-xl border border-[#E6B0A3] bg-[#FDECE7] px-2 py-1 text-xs font-bold text-[#A43B24] hover:bg-[#FAD7CD] sm:px-2.5"
                   >
                     <Trash2 className="h-3 w-3" />
                     移除
@@ -702,17 +707,17 @@ export default function SiteSurveyRecord({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-4">
               {/* 區域 (客廳、主臥、次臥、書房 + 自訂輸入) */}
-              <div className="lg:col-span-2">
-                <label className="mb-1.5 block text-xs font-bold text-[#7A675B]">區域</label>
-                <div className="flex flex-wrap items-center gap-1.5">
+              <div className="col-span-2 lg:col-span-2">
+                <label className="mb-1 block text-xs font-bold text-[#7A675B] sm:mb-1.5">區域</label>
+                <div className="flex flex-wrap items-center gap-1">
                   {PRESET_AREAS.map((preset) => (
                     <button
                       key={preset}
                       type="button"
                       onClick={() => updateRoom(room.id, { area: preset })}
-                      className={`rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-colors whitespace-nowrap ${
+                      className={`rounded-lg border px-2 py-1 text-xs font-bold transition-colors whitespace-nowrap sm:px-2.5 sm:py-1.5 ${
                         room.area === preset
                           ? 'border-[#C68934] bg-[#F6BE6B] text-[#3B312C]'
                           : 'border-[#DFCBB9] bg-[#F6E9DA] text-[#3B312C] hover:bg-[#EAD6C2]'
@@ -726,33 +731,33 @@ export default function SiteSurveyRecord({
                     value={room.area}
                     onChange={(e) => updateRoom(room.id, { area: e.target.value })}
                     placeholder="或自行輸入區域名稱"
-                    className="min-w-[140px] flex-1 rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-3 py-1.5 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none"
+                    className="min-w-[120px] flex-1 rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-2.5 py-1 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none sm:min-w-[140px] sm:px-3 sm:py-1.5"
                   />
                 </div>
               </div>
 
               {/* 位置 */}
               <div>
-                <label className="mb-1.5 block text-xs font-bold text-[#7A675B]">位置</label>
+                <label className="mb-1 block text-xs font-bold text-[#7A675B] sm:mb-1.5">位置</label>
                 <input
                   type="text"
                   value={room.location}
                   onChange={(e) => updateRoom(room.id, { location: e.target.value })}
                   placeholder="例：窗簾盒左側樑下"
-                  className="w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-3 py-1.5 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none"
+                  className="w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-2.5 py-1 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none sm:px-3 sm:py-1.5"
                 />
               </div>
 
               {/* 坪數 */}
               <div>
-                <label className="mb-1.5 block text-xs font-bold text-[#7A675B]">坪數</label>
+                <label className="mb-1 block text-xs font-bold text-[#7A675B] sm:mb-1.5">坪數</label>
                 <div className="relative">
                   <input
                     type="text"
                     value={room.ping}
                     onChange={(e) => updateRoom(room.id, { ping: e.target.value })}
                     placeholder="例：6.5"
-                    className="font-mono-tabular w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-3 py-1.5 pr-9 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none"
+                    className="font-mono-tabular w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-2.5 py-1 pr-9 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none sm:px-3 sm:py-1.5"
                   />
                   <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#8A7567]">
                     坪
@@ -762,7 +767,7 @@ export default function SiteSurveyRecord({
 
               {/* 熱源 (無、西曬、頂樓) */}
               <div>
-                <label className="mb-1.5 block text-xs font-bold text-[#7A675B]">熱源</label>
+                <label className="mb-1 block text-xs font-bold text-[#7A675B] sm:mb-1.5">熱源</label>
                 <div className="flex items-center gap-1.5">
                   {HEAT_SOURCES.map((src) => (
                     <button
@@ -785,19 +790,19 @@ export default function SiteSurveyRecord({
 
               {/* 排水 */}
               <div>
-                <label className="mb-1.5 block text-xs font-bold text-[#7A675B]">排水</label>
+                <label className="mb-1 block text-xs font-bold text-[#7A675B] sm:mb-1.5">排水</label>
                 <input
                   type="text"
                   value={room.drainage}
                   onChange={(e) => updateRoom(room.id, { drainage: e.target.value })}
                   placeholder="例：陽台地排 / 需加裝排水器"
-                  className="w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-3 py-1.5 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none"
+                  className="w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-2.5 py-1 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none sm:px-3 sm:py-1.5"
                 />
               </div>
 
               {/* 室內銅管長度 */}
               <div>
-                <label className="mb-1.5 block text-xs font-bold text-[#7A675B]">
+                <label className="mb-1 block text-xs font-bold text-[#7A675B] sm:mb-1.5">
                   室內銅管長度
                 </label>
                 <div className="relative">
@@ -806,7 +811,7 @@ export default function SiteSurveyRecord({
                     value={room.indoorPipeLength}
                     onChange={(e) => updateRoom(room.id, { indoorPipeLength: e.target.value })}
                     placeholder="例：5.5"
-                    className="font-mono-tabular w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-3 py-1.5 pr-9 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none"
+                    className="font-mono-tabular w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-2.5 py-1 pr-9 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none sm:px-3 sm:py-1.5"
                   />
                   <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#8A7567]">
                     m
@@ -816,7 +821,7 @@ export default function SiteSurveyRecord({
 
               {/* 室外銅管長度 */}
               <div>
-                <label className="mb-1.5 block text-xs font-bold text-[#7A675B]">
+                <label className="mb-1 block text-xs font-bold text-[#7A675B] sm:mb-1.5">
                   室外銅管長度
                 </label>
                 <div className="relative">
@@ -825,7 +830,7 @@ export default function SiteSurveyRecord({
                     value={room.outdoorPipeLength}
                     onChange={(e) => updateRoom(room.id, { outdoorPipeLength: e.target.value })}
                     placeholder="例：3.5"
-                    className="font-mono-tabular w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-3 py-1.5 pr-9 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none"
+                    className="font-mono-tabular w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-2.5 py-1 pr-9 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none sm:px-3 sm:py-1.5"
                   />
                   <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#8A7567]">
                     m
@@ -834,14 +839,14 @@ export default function SiteSurveyRecord({
               </div>
 
               {/* 備註 */}
-              <div className="md:col-span-2 lg:col-span-4">
-                <label className="mb-1.5 block text-xs font-bold text-[#7A675B]">備註</label>
+              <div className="col-span-2 md:col-span-2 lg:col-span-4">
+                <label className="mb-1 block text-xs font-bold text-[#7A675B] sm:mb-1.5">備註</label>
                 <input
                   type="text"
                   value={room.note}
                   onChange={(e) => updateRoom(room.id, { note: e.target.value })}
                   placeholder="電源位置、迴風空間、洗孔尺寸或特殊裝潢配合事項..."
-                  className="w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-3 py-1.5 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none"
+                  className="w-full rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] px-2.5 py-1 text-sm text-[#3B312C] placeholder:text-[#A48F7E] focus:border-[#D9822B] focus:bg-[#FFFDF9] focus:outline-none sm:px-3 sm:py-1.5"
                 />
               </div>
             </div>
@@ -856,15 +861,15 @@ export default function SiteSurveyRecord({
       />
 
       {/* 右下浮動的「+」圖示，點擊後新增一組新的 */}
-      <div className="fixed bottom-6 right-6 z-30">
+      <div className="fixed bottom-4 right-4 z-30 sm:bottom-6 sm:right-6">
         <button
           type="button"
           onClick={addRoom}
           aria-label="新增一組空間紀錄"
           title="新增一組空間紀錄"
-          className="inline-flex h-14 w-14 items-center justify-center rounded-full border-2 border-[#3B312C] bg-[#F6BE6B] text-[#3B312C] shadow-[0_6px_0_rgba(59,49,44,0.28)] transition-transform duration-150 hover:scale-105 hover:bg-[#F3AF48] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3B312C]"
+          className="inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#3B312C] bg-[#F6BE6B] text-[#3B312C] shadow-[0_6px_0_rgba(59,49,44,0.28)] transition-transform duration-150 hover:scale-105 hover:bg-[#F3AF48] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3B312C] sm:h-14 sm:w-14"
         >
-          <Plus className="h-7 w-7 stroke-[2.5]" />
+          <Plus className="h-6 w-6 stroke-[2.5] sm:h-7 sm:w-7" />
         </button>
       </div>
       {/* 刪除確認提醒視窗 */}
