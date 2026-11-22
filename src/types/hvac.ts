@@ -12,6 +12,7 @@ export interface HvacProduct {
   inverterType: InverterType; // 變頻 or 定速
   grade: string; // 備註中的階級分類, e.g., 尊榮, 頂級, 旗艦, 標準, 商用
   name: string; // 產品型號與名稱
+  environment?: string; // 內機、暖氣或冷氣等環境分類
   climateMode: ClimateMode; // 太陽(冷暖) or 雪花(冷氣)
   capacityKw: string; // e.g., 2.8 kW / 4-5坪
   pipeSize: string; // 管徑 e.g., 2分 / 3分

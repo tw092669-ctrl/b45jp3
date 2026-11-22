@@ -17,6 +17,8 @@ import { CSV_TEMPLATE_HEADER, getBrandTheme, parseCsvProducts } from '../data/pr
 import { HvacProduct, InverterType, QuoteCartItem, SetType } from '../types/hvac';
 import { getProductMainName } from '../utils/spacePlannerHelpers';
 
+const ENVIRONMENT_TYPES = ['內機', '暖氣', '冷氣'] as const;
+
 interface BrandPriceLookupProps {
   products: HvacProduct[];
   onImportProducts: (newProducts: HvacProduct[], mode: 'append' | 'replace') => void;
@@ -36,6 +38,7 @@ export default function BrandPriceLookup({
 }: BrandPriceLookupProps) {
   const [selectedBrand, setSelectedBrand] = useState<string>('全部');
   const [selectedModelType, setSelectedModelType] = useState<string>('全部');
+  const [selectedEnvironment, setSelectedEnvironment] = useState<string>('全部');
   const [selectedSetType, setSelectedSetType] = useState<'全部' | SetType>('全部');
   const [selectedInverter, setSelectedInverter] = useState<'全部' | InverterType>('全部');
   const [selectedGrade, setSelectedGrade] = useState<string>('全部');
@@ -64,7 +67,9 @@ export default function BrandPriceLookup({
 
   const modelTypes = useMemo(() => {
     const set = new Set<string>();
-    products.forEach((p) => set.add(p.modelType));
+    products.forEach((p) => {
+      if (!p.modelType.includes('一對多')) set.add(p.modelType);
+    });
     return Array.from(set);
   }, [products]);
 
@@ -90,6 +95,7 @@ export default function BrandPriceLookup({
   const resetAllFilters = () => {
     setSelectedBrand('全部');
     setSelectedModelType('全部');
+    setSelectedEnvironment('全部');
     setSelectedSetType('全部');
     setSelectedInverter('全部');
     setSelectedGrade('全部');
@@ -107,6 +113,7 @@ export default function BrandPriceLookup({
     return products.filter((p) => {
       if (selectedBrand !== '全部' && p.brand !== selectedBrand) return false;
       if (selectedModelType !== '全部' && p.modelType !== selectedModelType) return false;
+      if (selectedEnvironment !== '全部' && p.environment !== selectedEnvironment) return false;
       if (selectedSetType !== '全部' && p.setType !== selectedSetType) return false;
       if (selectedInverter !== '全部' && p.inverterType !== selectedInverter) return false;
       if (selectedBrand !== '全部' && selectedGrade !== '全部' && p.grade !== selectedGrade)
@@ -120,6 +127,7 @@ export default function BrandPriceLookup({
           p.inverterType,
           p.grade,
           p.name,
+          p.environment || '',
           p.climateMode,
           p.capacityKw,
           p.pipeSize,
@@ -139,6 +147,7 @@ export default function BrandPriceLookup({
     products,
     selectedBrand,
     selectedModelType,
+    selectedEnvironment,
     selectedSetType,
     selectedInverter,
     selectedGrade,
@@ -174,6 +183,7 @@ export default function BrandPriceLookup({
             inverterType: (item.inverterType || item['變頻定速']) === '定速' ? '定速' : '變頻',
             grade: item.grade || item['階級'] || item['備註'] || '標準',
             name: item.name || item['產品名稱'] || item['型號'] || `機型 ${idx + 1}`,
+            environment: item.environment || item['環境'] || '',
             climateMode: (item.climateMode || item['冷暖'] || '').includes('暖')
               ? '冷暖'
               : '冷氣',
@@ -297,10 +307,29 @@ export default function BrandPriceLookup({
               })}
             </div>
 
-            {/* 3. 種類 (整組 or 多聯) AND (變頻 or 定速) */}
+            {/* 3. 環境 */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="w-14 shrink-0 text-xs font-bold text-[#6E5C52]">3. 環境</span>
+              {(['全部', ...ENVIRONMENT_TYPES] as const).map((environment) => (
+                <button
+                  key={environment}
+                  type="button"
+                  onClick={() => setSelectedEnvironment(environment)}
+                  className={`rounded-lg border px-2.5 py-1 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
+                    selectedEnvironment === environment
+                      ? 'border-[#C68934] bg-[#F6BE6B] text-[#3B312C]'
+                      : 'border-[#DFCBB9] bg-[#F6E9DA] text-[#5C4F49] hover:bg-[#EED9C4]'
+                  }`}
+                >
+                  {environment}
+                </button>
+              ))}
+            </div>
+
+            {/* 4. 種類 (整組 or 多聯) AND (變頻 or 定速) */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="w-14 shrink-0 text-xs font-bold text-[#6E5C52]">3. 種類</span>
+                <span className="w-14 shrink-0 text-xs font-bold text-[#6E5C52]">4. 種類</span>
                 {(['全部', '整組', '多聯'] as const).map((opt) => (
                   <button
                     key={opt}
@@ -335,9 +364,9 @@ export default function BrandPriceLookup({
               </div>
             </div>
 
-            {/* 4. 階級 (品牌選擇後再篩選"備註"中的分類) */}
+            {/* 5. 階級 (品牌選擇後再篩選"備註"中的分類) */}
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="w-14 shrink-0 text-xs font-bold text-[#6E5C52]">4. 階級</span>
+              <span className="w-14 shrink-0 text-xs font-bold text-[#6E5C52]">5. 階級</span>
               {selectedBrand === '全部' ? (
                 <span className="text-xs text-[#8E7A6E]">
                   請先於上方點選「品牌」，即會展開該品牌「備註」中的階級分類按鈕
@@ -377,7 +406,7 @@ export default function BrandPriceLookup({
             </div>
           </div>
 
-          {/* 右側：5. 無順序不限大小寫關鍵字搜尋 + 匯入附件 */}
+          {/* 右側：6. 無順序不限大小寫關鍵字搜尋 + 匯入附件 */}
           <div className="w-full shrink-0 space-y-2.5 border-t border-[#E6D3C3] pt-3 lg:w-80 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8E7A6E]" />

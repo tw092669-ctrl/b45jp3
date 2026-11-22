@@ -80,9 +80,8 @@ function getProductRows(response: GoogleSheetResponse): HvacProduct[] {
     const inverterType: InverterType = cellValue(row, typeIndex).includes('定速')
       ? '定速'
       : '變頻';
-    const climateMode: ClimateMode = cellValue(row, environmentIndex).includes('冷氣')
-      ? '冷氣'
-      : '冷暖';
+    const environment = cellValue(row, environmentIndex);
+    const climateMode: ClimateMode = environment.includes('冷氣') ? '冷氣' : '冷暖';
     const grade = cellValue(row, gradeIndex) || '標準';
     const rawPrice = cellValue(row, priceIndex).replace(/,/g, '');
     const price = Number(rawPrice.replace(/[^0-9.-]/g, ''));
@@ -96,6 +95,7 @@ function getProductRows(response: GoogleSheetResponse): HvacProduct[] {
         inverterType,
         grade,
         name: rawName,
+        environment,
         climateMode,
         capacityKw: cellValue(row, capacityIndex) || '—',
         pipeSize: formatPipeSize(cellValue(row, pipeIndex)),
