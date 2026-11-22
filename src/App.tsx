@@ -7,7 +7,7 @@ import PipingCalculator from './components/PipingCalculator';
 import QuotationBuilder from './components/QuotationBuilder';
 import SiteSurveyRecord, { createEmptyRoom } from './components/SiteSurveyRecord';
 import SpacePlanningView from './components/SpacePlanningView';
-import { INITIAL_HVAC_PRODUCTS } from './data/productsData';
+import { loadGoogleSheetProducts } from './data/googleSheetProducts';
 import {
   HvacProduct,
   ModuleId,
@@ -73,19 +73,9 @@ function createInitialSurvey(): SurveyRecordType {
 
 export default function App() {
   const [activeModule, setActiveModule] = useState<ModuleId>('home');
-
-  const [products, setProducts] = useState<HvacProduct[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // Ignore parse errors
-    }
-    return INITIAL_HVAC_PRODUCTS;
-  });
+  const [products, setProducts] = useState<HvacProduct[]>([]);
+  const [productSyncMessage, setProductSyncMessage] = useState('正在載入雲端產品價目表…');
+  const [productSyncError, setProductSyncError] = useState(false);
 
   const [surveys, setSurveys] = useState<SurveyRecordType[]>(() => {
     try {
@@ -141,6 +131,35 @@ export default function App() {
   });
 
   const [pipingSeedRuns, setPipingSeedRuns] = useState<PipingRunItem[] | undefined>(undefined);
+
+  useEffect(() => {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
+    } catch (error) {
+      console.error('Unable to clear the saved product catalog.', error);
+    }
+
+    let cancelled = false;
+    loadGoogleSheetProducts()
+      .then((cloudProducts) => {
+        if (cancelled) return;
+        setProducts(cloudProducts);
+        setProductSyncMessage(`已從雲端同步 ${cloudProducts.length} 筆產品資料。`);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        console.error('Unable to load the product catalog from Google Sheets.', error);
+        setProducts([]);
+        setProductSyncError(true);
+        setProductSyncMessage(
+          `雲端產品價目表載入失敗：${error instanceof Error ? error.message : '未知錯誤'}`
+        );
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -446,6 +465,17 @@ export default function App() {
           })}
         </div>
       </header>
+
+      <div
+        role={productSyncError ? 'alert' : 'status'}
+        className={`px-4 py-2 text-center text-sm font-medium ${
+          productSyncError
+            ? 'bg-red-100 text-red-800'
+            : 'bg-[#FFF8EE] text-[#5C4F49]'
+        }`}
+      >
+        {productSyncMessage}
+      </div>
 
       {/* Main Module Viewport */}
       {activeModule === 'home' && (
