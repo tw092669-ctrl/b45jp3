@@ -52,11 +52,11 @@ export default function HomeDirectory({
     {
       id: 'multisplit',
       index: '03',
-      title: '一對多組合查詢',
-      subtitle: '室外機能力匹配與超配比檢核',
+      title: '一對多室外機清單',
+      subtitle: '室外機型號與室內機組合一覽',
       description:
-        '依日立、大金、國際、三菱重工各級距室外機進行一對多配對試算，即時顯示總連接負載率、同時全開分配能力、孔位管徑規格及反查建議主機。',
-      statLabel: '支援 1對2 至 1對4 多聯組合檢核',
+        '依附件整理日立一對多室外機型號、冷房容量及室內機級數組合，以清單方式快速查詢，涵蓋冷暖型與冷專型。',
+      statLabel: '支援 1對2 至 1對5 組合清單',
       icon: Layers,
       accentClass: 'text-[#FFF8EE] bg-[#D16047] border-[#B44C35]',
     },
