@@ -145,7 +145,7 @@ export default function SiteSurveyRecord({
 
     const lines: string[] = [
       '════════════════════════════════════════',
-      '【空調場地探勘紀錄表】',
+      '【空調案場紀錄清單】',
       `建案 / 地址：${activeSurvey.projectOrAddress || '（未填寫）'}`,
       `設計師：${activeSurvey.designer || '（未填寫）'}`,
       `施作項目：${flags}`,
@@ -193,7 +193,7 @@ export default function SiteSurveyRecord({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `場地探勘紀錄_${activeSurvey.projectOrAddress || '未命名案場'}.txt`;
+    a.download = `案場紀錄清單_${activeSurvey.projectOrAddress || '未命名案場'}.txt`;
     a.click();
     URL.revokeObjectURL(url);
     setShowExportMenu(false);
@@ -235,7 +235,7 @@ export default function SiteSurveyRecord({
 
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 24px "Noto Sans TC", "Microsoft JhengHei", sans-serif';
-    ctx.fillText('空調工程 — 場地探勘紀錄表', 32, 41);
+    ctx.fillText('空調工程 — 案場紀錄清單', 32, 41);
 
     ctx.fillStyle = '#94A3B8';
     ctx.font = '14px "JetBrains Mono", "Noto Sans TC", monospace';
@@ -467,7 +467,7 @@ export default function SiteSurveyRecord({
     const dataUrl = canvas.toDataURL('image/jpeg', 0.94);
     const a = document.createElement('a');
     a.href = dataUrl;
-    a.download = `場地探勘紀錄_${activeSurvey.projectOrAddress || '未命名案場'}.jpg`;
+    a.download = `案場紀錄清單_${activeSurvey.projectOrAddress || '未命名案場'}.jpg`;
     a.click();
     setShowExportMenu(false);
   };
@@ -521,7 +521,7 @@ export default function SiteSurveyRecord({
               onClick={() =>
                 setPendingDelete({
                   title: '確認刪除案場',
-                  message: `確定要刪除「${activeSurvey.projectOrAddress.trim() || '未命名案場'}」的所有探勘紀錄嗎？`,
+                  message: `確定要刪除「${activeSurvey.projectOrAddress.trim() || '未命名案場'}」的所有案場紀錄嗎？`,
                   onConfirm: () => {
                     setPendingDelete(null);
                     onDeleteSurvey(activeSurvey.id);
@@ -654,7 +654,7 @@ export default function SiteSurveyRecord({
       </section>
 
       {/* 下方：可自行輸入文字的泡泡群組 */}
-      <section aria-label="分室探勘紀錄列表" className="mt-5 space-y-4">
+      <section aria-label="案場紀錄清單列表" className="mt-5 space-y-4">
         {activeSurvey.rooms.map((room, index) => (
           <div
             key={room.id}

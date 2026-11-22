@@ -41,7 +41,7 @@ export default function HomeDirectory({
     {
       id: 'survey',
       index: '02',
-      title: '場地探勘紀錄',
+      title: '案場紀錄清單',
       subtitle: '現場工程條件與分室管線登錄',
       description:
         '鎖定案場資訊與施工項目（美化管槽、牆體洗孔、切溝鑿牆），快速新增各空間坪數、熱源、排水與內外銅管長度，搭配立體平面方格圖，一鍵匯出清單或 JPG 工程表格。',
@@ -67,7 +67,7 @@ export default function HomeDirectory({
       subtitle: '銅管、控制線與電源線長度及金額計算',
       description:
         '依空間設定管徑與銅管、控制線、電源線長度，自動計算各迴路金額及總金額。',
-      statLabel: '支援從場地探勘紀錄一鍵帶入管長',
+      statLabel: '支援從案場紀錄清單一鍵帶入管長',
       icon: Calculator,
       accentClass: 'text-[#FFF8EE] bg-[#5C4F49] border-[#3B312C]',
     },
@@ -113,7 +113,7 @@ export default function HomeDirectory({
                 <div className="font-mono-tabular text-lg font-bold text-[#3B312C]">
                   {surveyCount}
                 </div>
-                <div className="text-[11px] font-medium text-[#7A665B]">探勘案場</div>
+                <div className="text-[11px] font-medium text-[#7A665B]">案場清單</div>
               </div>
               <button
                 type="button"

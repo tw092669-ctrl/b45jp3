@@ -406,6 +406,8 @@ export default function FloorPlanGridSection({
     startRow: number;
     startCol: number;
     original: FloorPlanRect;
+    baseCells: Record<string, number>;
+    baseRects: FloorPlanRect[];
   } | null>(null);
 
   // Pointer dragging state
@@ -500,6 +502,10 @@ export default function FloorPlanGridSection({
     e.currentTarget.setPointerCapture(e.pointerId);
 
     if (toolMode === 'select') {
+      setRectPreview(null);
+      dragRectRef.current = null;
+      isDrawingRef.current = false;
+      startCellRef.current = null;
       const rect = [...(data.rects ?? [])].reverse().find((item) =>
         cell.row >= item.minRow &&
         cell.row <= item.maxRow &&
@@ -514,6 +520,11 @@ export default function FloorPlanGridSection({
           startRow: cell.row,
           startCol: cell.col,
           original: { ...rect, mergedFrom: rect.mergedFrom?.map((source) => ({ ...source })) },
+          baseCells: { ...data.cells },
+          baseRects: (data.rects ?? []).map((item) => ({
+            ...item,
+            mergedFrom: item.mergedFrom?.map((source) => ({ ...source })),
+          })),
         };
         isDrawingRef.current = true;
       }
@@ -576,7 +587,15 @@ export default function FloorPlanGridSection({
       const cols = drag.original.maxCol - drag.original.minCol;
       const minRow = Math.max(0, Math.min(data.gridSize - rows - 1, drag.original.minRow + rowDelta));
       const minCol = Math.max(0, Math.min(data.gridSize - cols - 1, drag.original.minCol + colDelta));
-      const nextRects = (data.rects ?? []).map((rect) =>
+      const overlapsAnotherRect = drag.baseRects.some((rect) =>
+        rect.id !== drag.id &&
+        minRow <= rect.maxRow &&
+        minRow + rows >= rect.minRow &&
+        minCol <= rect.maxCol &&
+        minCol + cols >= rect.minCol
+      );
+      if (overlapsAnotherRect) return;
+      const nextRects = drag.baseRects.map((rect) =>
         rect.id === drag.id
           ? {
               ...rect,
@@ -588,7 +607,7 @@ export default function FloorPlanGridSection({
           : rect
       );
 
-      const nextCells = { ...data.cells };
+      const nextCells = { ...drag.baseCells };
       for (let r = drag.original.minRow; r <= drag.original.maxRow; r++) {
         for (let c = drag.original.minCol; c <= drag.original.maxCol; c++) {
           delete nextCells[`${r},${c}`];
@@ -1049,6 +1068,9 @@ export default function FloorPlanGridSection({
                 onClick={() => {
                   setToolMode('select');
                   setIs3DTilt(false);
+                  setRectPreview(null);
+                  dragRectRef.current = null;
+                  isDrawingRef.current = false;
                 }}
                 className={`inline-flex items-center justify-center gap-1.5 rounded-xl border px-2.5 py-2 text-xs font-bold transition-colors ${
                   toolMode === 'select'

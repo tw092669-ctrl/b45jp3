@@ -395,7 +395,7 @@ export default function App() {
 
   const navItems: { id: ModuleId; label: string }[] = [
     { id: 'price', label: '品牌價格查詢' },
-    { id: 'survey', label: '場地探勘紀錄' },
+    { id: 'survey', label: '案場紀錄清單' },
     { id: 'multisplit', label: '一對多室外機清單' },
     { id: 'piping', label: '管路計算系統' },
   ];
