@@ -8,6 +8,12 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react';
+import {
+  PIPE_CATALOG,
+  WIRE_CATALOG,
+  PipeGauge,
+  WireType,
+} from '../data/pipeWireCatalog';
 import { PipingRunItem, SiteSurveyRecord } from '../types/hvac';
 import ConfirmDialog from './ConfirmDialog';
 
@@ -16,38 +22,33 @@ interface PipingCalculatorProps {
   initialRuns?: PipingRunItem[];
 }
 
-const PIPE_GAUGES: PipingRunItem['pipeGauge'][] = [
-  '2分/3分',
-  '2分/4分',
-  '2分/5分',
-  '3分/5分',
-  '3分/6分',
-];
+const PIPE_GAUGES: PipeGauge[] = PIPE_CATALOG.map((spec) => spec.name);
 
-const CABLE_TYPES: PipingRunItem['cableType'][] = [
-  '3C 2.0mm',
-  '4C 2.0mm',
-  '4C 1.25mm',
-  '3C 3.5mm',
-];
+const CABLE_TYPES: WireType[] = WIRE_CATALOG.map((spec) => spec.name);
+const PIPE_UNIT_PRICES = Object.fromEntries(
+  PIPE_CATALOG.map(({ name, unitPrice }) => [name, unitPrice])
+) as Record<PipeGauge, number>;
+const WIRE_UNIT_PRICES = Object.fromEntries(
+  WIRE_CATALOG.map(({ name, unitPrice }) => [name, unitPrice])
+) as Record<WireType, number>;
 
 const DEFAULT_RUNS: PipingRunItem[] = [
   {
     id: 'run-1',
     label: '客廳',
-    pipeGauge: '2分/4分',
+    pipeGauge: '2/4 管路',
     lengthM: 12,
     drainLengthM: 8,
-    cableType: '3C 2.0mm',
+    cableType: '2.0mm電源線',
     heightDiffM: 3,
   },
   {
     id: 'run-2',
     label: '主臥',
-    pipeGauge: '2分/3分',
+    pipeGauge: '2/3 管路',
     lengthM: 8.5,
     drainLengthM: 6,
-    cableType: '3C 2.0mm',
+    cableType: '2.0mm電源線',
     heightDiffM: 2.5,
   },
 ];
@@ -57,13 +58,8 @@ export default function PipingCalculator({ surveys, initialRuns }: PipingCalcula
     initialRuns && initialRuns.length > 0 ? initialRuns : DEFAULT_RUNS
   );
 
-  // Unit pricing for copper pipe per meter (editable by contractor)
-  const [unitPriceMap, setUnitPriceMap] = useState<Record<PipingRunItem['pipeGauge'], number>>({
-    '2分/3分': 350,
-    '2分/4分': 450,
-    '2分/5分': 550,
-    '3分/5分': 650,
-    '3分/6分': 780,
+  const [unitPriceMap, setUnitPriceMap] = useState<Record<PipeGauge, number>>({
+    ...PIPE_UNIT_PRICES,
   });
 
   // Refrigerant extra charge calculator
@@ -83,10 +79,10 @@ export default function PipingCalculator({ surveys, initialRuns }: PipingCalcula
       {
         id: `run-${Date.now()}`,
         label: `空間 #${prev.length + 1}`,
-        pipeGauge: '2分/3分',
+        pipeGauge: '2/3 管路',
         lengthM: 6,
         drainLengthM: 4,
-        cableType: '3C 2.0mm',
+        cableType: '2.0mm電源線',
         heightDiffM: 2,
       },
     ]);
@@ -107,7 +103,7 @@ export default function PipingCalculator({ surveys, initialRuns }: PipingCalcula
         (parseFloat(room.indoorPipeLength) || 0) + (parseFloat(room.outdoorPipeLength) || 0);
       const pingNum = parseFloat(room.ping) || 0;
       const guessedGauge: PipingRunItem['pipeGauge'] =
-        pingNum >= 9 ? '2分/5分' : pingNum >= 6 ? '2分/4分' : '2分/3分';
+        pingNum >= 9 ? '2/5 管路' : pingNum >= 6 ? '2/4 管路' : '2/3 管路';
 
       return {
         id: `srv-${Date.now()}-${idx}`,
@@ -115,7 +111,7 @@ export default function PipingCalculator({ surveys, initialRuns }: PipingCalcula
         pipeGauge: guessedGauge,
         lengthM: totalPipe > 0 ? Number(totalPipe.toFixed(1)) : 6,
         drainLengthM: totalPipe > 0 ? Number((totalPipe * 0.7).toFixed(1)) : 4,
-        cableType: '3C 2.0mm',
+        cableType: '2.0mm電源線',
         heightDiffM: 2.5,
       };
     });
@@ -125,17 +121,18 @@ export default function PipingCalculator({ surveys, initialRuns }: PipingCalcula
   };
 
   const summary = useMemo(() => {
-    const byGauge: Record<PipingRunItem['pipeGauge'], number> = {
-      '2分/3分': 0,
-      '2分/4分': 0,
-      '2分/5分': 0,
-      '3分/5分': 0,
-      '3分/6分': 0,
-    };
+    const byGauge = Object.fromEntries(PIPE_GAUGES.map((gauge) => [gauge, 0])) as Record<
+      PipeGauge,
+      number
+    >;
+    const cableMetersByType = Object.fromEntries(
+      CABLE_TYPES.map((cableType) => [cableType, 0])
+    ) as Record<WireType, number>;
     let totalPipeM = 0;
     let totalDrainM = 0;
     let totalCableM = 0;
     let estimatedPipeCost = 0;
+    let estimatedCableCost = 0;
     let oilTrapNeededCount = 0;
 
     runs.forEach((r) => {
@@ -144,8 +141,11 @@ export default function PipingCalculator({ surveys, initialRuns }: PipingCalcula
       byGauge[r.pipeGauge] += len;
       totalPipeM += len;
       totalDrainM += drain;
-      totalCableM += len + 1.5; // +1.5m terminal slack
+      const cableLength = len + 1.5;
+      totalCableM += cableLength;
+      cableMetersByType[r.cableType] += cableLength;
       estimatedPipeCost += len * (unitPriceMap[r.pipeGauge] || 0);
+      estimatedCableCost += cableLength * WIRE_UNIT_PRICES[r.cableType];
       if ((Number(r.heightDiffM) || 0) >= 6) {
         oilTrapNeededCount += 1;
       }
@@ -169,6 +169,8 @@ export default function PipingCalculator({ surveys, initialRuns }: PipingCalcula
       totalDrainM,
       totalCableM,
       estimatedPipeCost,
+      cableMetersByType,
+      estimatedCableCost,
       oilTrapNeededCount,
       extraMeters,
       gramsPerMeter,
@@ -434,7 +436,7 @@ export default function PipingCalculator({ surveys, initialRuns }: PipingCalcula
         <aside className="space-y-4 lg:col-span-4">
           {/* 銅管分徑統計 */}
           <div className="bento-card p-5">
-            <h2 className="text-sm font-extrabold text-[#3B312C]">銅管備料與金額估算</h2>
+            <h2 className="text-sm font-extrabold text-[#3B312C]">銅管、電線備料與金額估算</h2>
             <div className="mt-3 space-y-2.5">
               {PIPE_GAUGES.map((gauge) => {
                 const meters = summary.byGauge[gauge];
@@ -490,16 +492,36 @@ export default function PipingCalculator({ surveys, initialRuns }: PipingCalcula
                   {summary.totalDrainM.toFixed(1)} m
                 </span>
               </div>
-              <div className="flex justify-between text-[#7A675B]">
-                <span>控制電纜預估 (含接線餘長)</span>
-                <span className="font-mono-tabular font-bold text-[#3B312C]">
-                  {summary.totalCableM.toFixed(1)} m
-                </span>
+              <div className="space-y-1 border-t border-[#E8D8C8] pt-2">
+                <div className="flex justify-between font-bold text-[#7A675B]">
+                  <span>電線材料 (各迴路含 1.5m 接線餘長)</span>
+                  <span>{summary.totalCableM.toFixed(1)} m</span>
+                </div>
+                {WIRE_CATALOG.map(({ name, unitPrice }) => {
+                  const meters = summary.cableMetersByType[name];
+                  if (meters <= 0) return null;
+                  return (
+                    <div key={name} className="flex justify-between pl-2 text-[#7A675B]">
+                      <span>
+                        {name}（{meters.toFixed(1)} m × ${unitPrice}/m）
+                      </span>
+                      <span className="font-mono-tabular font-bold text-[#3B312C]">
+                        NT$ {Math.round(meters * unitPrice).toLocaleString()}
+                      </span>
+                    </div>
+                  );
+                })}
+                <div className="flex justify-between font-bold text-[#3B312C]">
+                  <span>電線材料小計</span>
+                  <span className="font-mono-tabular">
+                    NT$ {Math.round(summary.estimatedCableCost).toLocaleString()}
+                  </span>
+                </div>
               </div>
               <div className="flex justify-between border-t border-[#E8D8C8] pt-2 text-sm font-extrabold text-[#3B312C]">
-                <span>銅管施工預估小計</span>
+                <span>銅管與電線預估合計</span>
                 <span className="font-mono-tabular text-[#4E7C64]">
-                  NT$ {Math.round(summary.estimatedPipeCost).toLocaleString()}
+                  NT$ {Math.round(summary.estimatedPipeCost + summary.estimatedCableCost).toLocaleString()}
                 </span>
               </div>
             </div>

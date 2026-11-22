@@ -375,14 +375,14 @@ export default function App() {
         (parseFloat(room.indoorPipeLength) || 0) + (parseFloat(room.outdoorPipeLength) || 0);
       const pingNum = parseFloat(room.ping) || 0;
       const guessedGauge: PipingRunItem['pipeGauge'] =
-        pingNum >= 9 ? '2分/5分' : pingNum >= 6 ? '2分/4分' : '2分/3分';
+        pingNum >= 9 ? '2/5 管路' : pingNum >= 6 ? '2/4 管路' : '2/3 管路';
       return {
         id: `srv-pipe-${Date.now()}-${idx}`,
         label: room.area || `空間 #${idx + 1}`,
         pipeGauge: guessedGauge,
         lengthM: totalPipe > 0 ? Number(totalPipe.toFixed(1)) : 6,
         drainLengthM: totalPipe > 0 ? Number((totalPipe * 0.7).toFixed(1)) : 4,
-        cableType: '3C 2.0mm',
+        cableType: '2.0mm電源線',
         heightDiffM: 2.5,
       };
     });

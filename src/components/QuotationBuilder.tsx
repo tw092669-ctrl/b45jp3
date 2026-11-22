@@ -19,7 +19,8 @@ import {
 import { ConstructionLineItem, QuotationDraft, QuoteCartItem } from '../types/hvac';
 import { getEffectiveUnitPrice } from '../utils/quoteHelpers';
 import ConfirmDialog from './ConfirmDialog';
-import PipeWireCalculatorModal, { PIPE_WIRE_CATALOG } from './PipeWireCalculatorModal';
+import { PIPE_WIRE_CATALOG } from '../data/pipeWireCatalog';
+import PipeWireCalculatorModal from './PipeWireCalculatorModal';
 
 interface QuotationBuilderProps {
   quoteItems: QuoteCartItem[];
@@ -207,7 +208,7 @@ export default function QuotationBuilder({
   };
 
   const handleCalculatorConfirm = (calculatedItems: ConstructionLineItem[]) => {
-    const calcKeys = new Set(PIPE_WIRE_CATALOG.map((s) => s.key));
+    const calcKeys = new Set<string>(PIPE_WIRE_CATALOG.map((s) => s.key));
     const manualRows = draft.constructionItems.filter(
       (row) => !row.sourceKey || !calcKeys.has(row.sourceKey)
     );

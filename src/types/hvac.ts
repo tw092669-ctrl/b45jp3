@@ -1,3 +1,5 @@
+import type { PipeGauge, WireType } from '../data/pipeWireCatalog';
+
 export type ModuleId = 'home' | 'price' | 'survey' | 'multisplit' | 'piping' | 'quote' | 'space';
 
 export type SetType = '整組' | '多聯';
@@ -133,9 +135,9 @@ export interface MultiSplitOutdoorUnit {
 export interface PipingRunItem {
   id: string;
   label: string;
-  pipeGauge: '2分/3分' | '2分/4分' | '2分/5分' | '3分/5分' | '3分/6分';
+  pipeGauge: PipeGauge;
   lengthM: number;
   drainLengthM: number;
-  cableType: '3C 2.0mm' | '4C 2.0mm' | '4C 1.25mm' | '3C 3.5mm';
+  cableType: WireType;
   heightDiffM: number;
 }
