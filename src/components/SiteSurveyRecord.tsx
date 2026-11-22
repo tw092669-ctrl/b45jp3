@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Calculator,
   Check,
   Copy,
   Download,
@@ -16,6 +17,7 @@ import FloorPlanGridSection, {
   createDefaultFloorPlan,
   renderFloorPlanCanvas,
 } from './FloorPlanGridSection';
+import AreaCalculatorModal from './AreaCalculatorModal';
 
 interface SiteSurveyRecordProps {
   surveys: SurveyRecordType[];
@@ -54,6 +56,7 @@ export default function SiteSurveyRecord({
   onSendToPiping,
 }: SiteSurveyRecordProps) {
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showAreaCalculator, setShowAreaCalculator] = useState(false);
   const [copiedText, setCopiedText] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{
     title: string;
@@ -660,6 +663,16 @@ export default function SiteSurveyRecord({
 
       {/* 下方：可自行輸入文字的泡泡群組 */}
       <section aria-label="案場紀錄清單列表" className="mt-3 space-y-3 sm:mt-5 sm:space-y-4">
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setShowAreaCalculator(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl border-2 border-[#3C634F] bg-[#4E7C64] px-3 py-2 text-sm font-bold text-[#FFF8EE] shadow-[0_2px_0_rgba(59,49,44,0.16)] transition-colors hover:bg-[#416A55]"
+          >
+            <Calculator className="h-4 w-4" />
+            坪數計算
+          </button>
+        </div>
         {activeSurvey.rooms.map((room, index) => (
           <div
             key={room.id}
@@ -859,6 +872,10 @@ export default function SiteSurveyRecord({
         floorPlan={activeSurvey.floorPlan ?? createDefaultFloorPlan()}
         onChange={(nextFloorPlan) => updateField('floorPlan', nextFloorPlan)}
       />
+
+      {showAreaCalculator && (
+        <AreaCalculatorModal onClose={() => setShowAreaCalculator(false)} />
+      )}
 
       {/* 右下浮動的「+」圖示，點擊後新增一組新的 */}
       <div className="fixed bottom-4 right-4 z-30 sm:bottom-6 sm:right-6">
