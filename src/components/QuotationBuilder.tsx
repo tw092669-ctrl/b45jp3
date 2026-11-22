@@ -364,9 +364,11 @@ export default function QuotationBuilder({
               const specLine = `${sub.product.brand} - ${sub.product.modelType}型 - ${sub.product.inverterType} - ${sub.product.climateMode}`;
               const modelCode = extractModelCode(sub.product.name);
 
-              ctx.fillStyle = '#64748B';
-              ctx.font = '11px "Noto Sans TC", "Microsoft JhengHei", sans-serif';
-              ctx.fillText(specLine, rx + col.w / 2, sy + 15);
+              if (sIdx === 0) {
+                ctx.fillStyle = '#64748B';
+                ctx.font = '11px "Noto Sans TC", "Microsoft JhengHei", sans-serif';
+                ctx.fillText(specLine, rx + col.w / 2, sy + 15);
+              }
               ctx.fillStyle = '#0F172A';
               ctx.font = 'bold 14px "JetBrains Mono", "Noto Sans TC", sans-serif';
               ctx.fillText(modelCode, rx + col.w / 2, sy + 34);
@@ -773,9 +775,11 @@ export default function QuotationBuilder({
                                     }
                                   >
                                     <div className="flex items-center justify-between gap-2">
-                                      <span className="text-[11px] font-medium text-[#7A675B]">
-                                        {specSummary}
-                                      </span>
+                                      {sIdx === 0 && (
+                                        <span className="text-[11px] font-medium text-[#7A675B]">
+                                          {specSummary}
+                                        </span>
+                                      )}
                                       <span className="font-mono-tabular shrink-0 rounded-md border border-[#DFCBB9] bg-[#F6E9DA] px-1.5 py-0.5 text-[11px] font-bold text-[#3B312C]">
                                         {powerStr}
                                       </span>
@@ -1117,7 +1121,11 @@ export default function QuotationBuilder({
                                           : ''
                                       }
                                     >
-                                      <div className="text-[11px] text-[#7A675B]">{specSummary}</div>
+                                      {sIdx === 0 && (
+                                        <div className="text-[11px] text-[#7A675B]">
+                                          {specSummary}
+                                        </div>
+                                      )}
                                       <div className="font-mono-tabular mt-0.5 text-sm font-bold text-[#3B312C]">
                                         {modelCode}
                                       </div>
