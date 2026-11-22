@@ -17,7 +17,50 @@ interface GoogleSheetResponse {
   };
 }
 
-let callbackSequence = 0;
+function parseCsvRows(csvText: string): string[][] {
+  const text = csvText.replace(/^\uFEFF/, '');
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let value = '';
+  let quoted = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+
+    if (quoted) {
+      if (character === '"') {
+        if (text[index + 1] === '"') {
+          value += '"';
+          index += 1;
+        } else {
+          quoted = false;
+        }
+      } else {
+        value += character;
+      }
+    } else if (character === '"' && value === '') {
+      quoted = true;
+    } else if (character === ',') {
+      row.push(value.trim());
+      value = '';
+    } else if (character === '\n' || character === '\r') {
+      row.push(value.trim());
+      value = '';
+      if (row.some((cell) => cell !== '')) rows.push(row);
+      row = [];
+      if (character === '\r' && text[index + 1] === '\n') index += 1;
+    } else {
+      value += character;
+    }
+  }
+
+  if (value !== '' || row.length > 0) {
+    row.push(value.trim());
+    if (row.some((cell) => cell !== '')) rows.push(row);
+  }
+
+  return rows;
+}
 
 function getProductRows(response: GoogleSheetResponse): HvacProduct[] {
   if (response.status !== 'ok' || !response.table?.cols || !response.table.rows) {
@@ -83,8 +126,18 @@ function getProductRows(response: GoogleSheetResponse): HvacProduct[] {
     const environment = cellValue(row, environmentIndex);
     const climateMode: ClimateMode = environment.includes('冷氣') ? '冷氣' : '冷暖';
     const grade = cellValue(row, gradeIndex) || '標準';
-    const rawPrice = cellValue(row, priceIndex).replace(/,/g, '');
-    const price = Number(rawPrice.replace(/[^0-9.-]/g, ''));
+    const rawPrice = cellValue(row, priceIndex);
+    const priceValues = rawPrice.match(/-?\d[\d,]*(?:\.\d+)?/g) || [];
+    const amounts = priceValues.map((value) => Number(value.replace(/,/g, '')));
+    const price =
+      amounts.length === 1
+        ? amounts[0]
+        : rawPrice.includes('/') && amounts.length === 2
+          ? amounts[0] + amounts[1]
+          : Number.NaN;
+    if (amounts.length > 1 && !(rawPrice.includes('/') && amounts.length === 2)) {
+      console.warn(`產品價格包含多個金額，無法作為單一價格匯入：${rawName}（${rawPrice}）`);
+    }
 
     return [
       {
@@ -113,53 +166,41 @@ function getProductRows(response: GoogleSheetResponse): HvacProduct[] {
   return products;
 }
 
-export function loadGoogleSheetProducts(): Promise<HvacProduct[]> {
-  return new Promise((resolve, reject) => {
-    const callbackName = `__hvacSheetResponse${++callbackSequence}`;
-    const script = document.createElement('script');
-    let timeoutId = 0;
-    let settled = false;
+export async function loadGoogleSheetProducts(): Promise<HvacProduct[]> {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), LOAD_TIMEOUT_MS);
 
-    const cleanup = () => {
-      window.clearTimeout(timeoutId);
-      script.remove();
-      Reflect.deleteProperty(window, callbackName);
-    };
-    const fail = (error: Error) => {
-      if (settled) return;
-      settled = true;
-      cleanup();
-      reject(error);
-    };
-
-    Object.defineProperty(window, callbackName, {
-      configurable: true,
-      value: (response: GoogleSheetResponse) => {
-        if (settled) return;
-        try {
-          const products = getProductRows(response);
-          settled = true;
-          cleanup();
-          resolve(products);
-        } catch (error) {
-          fail(error instanceof Error ? error : new Error(String(error)));
-        }
-      },
-    });
-
-    const url = new URL(
-      `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq`
-    );
-    url.searchParams.set('tqx', `out:json;responseHandler:${callbackName}`);
+  try {
+    const url = new URL(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export`);
+    url.searchParams.set('format', 'csv');
     url.searchParams.set('gid', SHEET_GID);
 
-    script.async = true;
-    script.src = url.toString();
-    script.onerror = () => fail(new Error('無法連線至 Google 試算表。'));
-    timeoutId = window.setTimeout(
-      () => fail(new Error('讀取 Google 試算表逾時。')),
-      LOAD_TIMEOUT_MS
-    );
-    document.head.appendChild(script);
-  });
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`無法連線至 Google 試算表（HTTP ${response.status}）。`);
+    }
+
+    const [headers, ...dataRows] = parseCsvRows(await response.text());
+    if (!headers || dataRows.length === 0) {
+      throw new Error('試算表中沒有可載入的產品資料。');
+    }
+
+    return getProductRows({
+      status: 'ok',
+      table: {
+        cols: headers.map((label) => ({ label })),
+        rows: dataRows.map((values) => ({ c: values.map((value) => ({ v: value })) })),
+      },
+    });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error('讀取 Google 試算表逾時。');
+    }
+    if (error instanceof TypeError) {
+      throw new Error('無法連線至 Google 試算表。');
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 }

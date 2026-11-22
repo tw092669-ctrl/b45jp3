@@ -19,6 +19,8 @@ import { getProductMainName } from '../utils/spacePlannerHelpers';
 
 const ENVIRONMENT_TYPES = ['內機', '暖氣', '冷氣'] as const;
 
+const formatProductPrice = (price: number) => (price > 0 ? price.toLocaleString() : '—');
+
 interface BrandPriceLookupProps {
   products: HvacProduct[];
   onImportProducts: (newProducts: HvacProduct[], mode: 'append' | 'replace') => void;
@@ -539,7 +541,7 @@ export default function BrandPriceLookup({
                         </div>
                         <div className="shrink-0 text-right">
                           <div className="font-mono-tabular text-xs font-extrabold text-[#3B312C]">
-                            NT$ {product.price.toLocaleString()}
+                            {formatProductPrice(product.price)}
                           </div>
                           <div className="mt-1 text-[10px] font-semibold text-[#6E5C52]">
                             {product.pipeSize}
@@ -707,7 +709,7 @@ export default function BrandPriceLookup({
 
                       {/* 6. 單價 */}
                       <td className="font-mono-tabular px-4 py-3.5 text-right align-middle font-bold text-[#3B312C] whitespace-nowrap">
-                        NT$ {product.price.toLocaleString()}
+                        {formatProductPrice(product.price)}
                       </td>
                     </tr>
                   );
