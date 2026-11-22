@@ -1108,10 +1108,10 @@ export default function FloorPlanGridSection({
         </div>
       </div>
 
-      {/* 主工作區：左側 8 色與工具 + 右側立體棋盤格與指南針 */}
+      {/* 主工作區：桌面版畫布在左、8 色與繪圖工具在右側；窄螢幕則依序堆疊 */}
       <div className="mt-5 grid grid-cols-1 gap-6 xl:grid-cols-12">
-        {/* 左側控制欄：繪圖模式 + 8 色選擇與編輯名稱 + 坪數統計 */}
-        <div className="space-y-4 xl:col-span-4">
+        {/* 桌面版右側控制欄：繪圖模式 + 8 色選擇與編輯名稱 + 坪數統計 */}
+        <div className="order-2 space-y-4 xl:order-2 xl:col-span-4">
           {/* 操作模式工具 */}
           <div className="rounded-xl border border-[#DFCBB9] bg-[#F6E9DA] p-3">
             <div className="mb-2 flex items-center justify-between">
@@ -1303,8 +1303,8 @@ export default function FloorPlanGridSection({
           </div>
         </div>
 
-        {/* 右側：灰底棋盤式立體表格 + 簡易可旋轉指南針 */}
-        <div className="xl:col-span-8">
+        {/* 左側：灰底棋盤式立體表格 + 簡易可旋轉指南針 */}
+        <div className="order-1 xl:order-1 xl:col-span-8">
           <div className="relative rounded-2xl border-2 border-[#CBB5A5] bg-[#F5E6D5]/70 p-3 sm:p-4">
             {/* 頂部即時狀態列 */}
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs">
