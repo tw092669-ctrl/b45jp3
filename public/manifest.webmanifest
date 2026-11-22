@@ -3,8 +3,8 @@
   "short_name": "小隼空調",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#16113A",
-  "theme_color": "#16113A",
+  "background_color": "#0B0922",
+  "theme_color": "#0B0922",
   "icons": [
     {
       "src": "/assets/app-icon-192.png",
