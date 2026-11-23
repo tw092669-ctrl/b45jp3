@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { Undo2 } from 'lucide-react';
 import BrandPriceLookup from './components/BrandPriceLookup';
 import HomeDirectory from './components/HomeDirectory';
 import MascotBadge from './components/MascotBadge';
@@ -552,7 +552,7 @@ export default function App() {
           title="返回主頁"
           className="fixed bottom-4 left-4 z-40 inline-flex h-10 w-10 items-center justify-center rounded-xl border-2 border-[#3B312C] bg-[#F6BE6B] text-[#3B312C] shadow-[0_3px_8px_rgba(59,49,44,0.24)] transition-all hover:bg-[#F8C97E] active:translate-y-px sm:bottom-6 sm:left-6"
         >
-          <ArrowLeft className="h-4 w-4 shrink-0" />
+          <Undo2 className="h-5 w-5 shrink-0 text-[#7A4A32]" strokeWidth={2.8} />
         </button>
       )}
     </div>
