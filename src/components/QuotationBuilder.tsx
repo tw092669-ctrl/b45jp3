@@ -90,7 +90,7 @@ export default function QuotationBuilder({
   onClearAndBack,
 }: QuotationBuilderProps) {
   const [showCalculator, setShowCalculator] = useState(false);
-  const pricePercent = typeof draft.pricePercent === 'number' ? draft.pricePercent : 100;
+  const pricePercent = typeof draft.pricePercent === 'number' ? draft.pricePercent : 105;
   const [percentInput, setPercentInput] = useState<string>(String(pricePercent));
 
   // Track which row currently has the "$" 調整價格 box open & its typed amount
@@ -567,11 +567,23 @@ export default function QuotationBuilder({
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end">
-            {/* 百分比調整（預設 100%，調整後單價無條件進位至百） */}
+            {/* 百分比調整（預設 105%，調整後單價無條件進位至百） */}
             <div
               className="inline-flex min-h-[40px] flex-1 items-center justify-between gap-1.5 rounded-xl border border-[#D4BCAE] bg-[#FFF8EE] px-2.5 py-1.5 text-[#3B312C] sm:flex-none sm:justify-start"
               title="調整設備單價百分比（無條件進位至百位，例：18555 → 18600）"
             >
+              {pricePercent !== 105 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPercentInput('105');
+                    onChangePricePercent(105);
+                  }}
+                  className="rounded-md bg-[#F6BE6B]/30 px-1.5 py-1 text-[11px] font-bold text-[#8A4E14] hover:bg-[#F6BE6B]/60 whitespace-nowrap"
+                >
+                  重設
+                </button>
+              )}
               <span className="text-xs font-bold text-[#6E5C52] whitespace-nowrap">
                 單價比例
               </span>
@@ -608,8 +620,8 @@ export default function QuotationBuilder({
                     }}
                     onBlur={() => {
                       if (percentInput.trim() === '' || Number.isNaN(Number(percentInput))) {
-                        setPercentInput('100');
-                        onChangePricePercent(100);
+                        setPercentInput('105');
+                        onChangePricePercent(105);
                       } else {
                         const normalized = Math.max(0, Number(percentInput));
                         setPercentInput(String(normalized));
@@ -632,18 +644,6 @@ export default function QuotationBuilder({
                 >
                   <Plus className="h-3.5 w-3.5" />
                 </button>
-                {pricePercent !== 100 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPercentInput('100');
-                      onChangePricePercent(100);
-                    }}
-                    className="ml-0.5 rounded-md bg-[#F6BE6B]/30 px-1.5 py-1 text-[11px] font-bold text-[#8A4E14] hover:bg-[#F6BE6B]/60 whitespace-nowrap"
-                  >
-                    重設
-                  </button>
-                )}
               </div>
             </div>
 

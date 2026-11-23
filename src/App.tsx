@@ -44,7 +44,7 @@ function createInitialQuoteDraft(): QuotationDraft {
     customerAddress: '',
     customerPhone: '',
     quoteDate: getTodayDateString(),
-    pricePercent: 100,
+    pricePercent: 105,
     constructionItems: [
       {
         id: `const-init-${Date.now()}`,
@@ -117,7 +117,7 @@ export default function App() {
             pricePercent:
               typeof parsed.pricePercent === 'number' && !Number.isNaN(parsed.pricePercent)
                 ? parsed.pricePercent
-                : 100,
+                : 105,
             constructionItems: Array.isArray(parsed.constructionItems)
               ? parsed.constructionItems
               : [],
