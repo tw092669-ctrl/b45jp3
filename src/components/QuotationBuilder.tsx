@@ -6,6 +6,8 @@ import {
   Check,
   Copy,
   DollarSign,
+  FileSpreadsheet,
+  FileText,
   ImageDown,
   Layers,
   Minus,
@@ -18,6 +20,7 @@ import {
 } from 'lucide-react';
 import { ConstructionLineItem, QuotationDraft, QuoteCartItem } from '../types/hvac';
 import { getEffectiveUnitPrice } from '../utils/quoteHelpers';
+import { createXlsxWorkbook, XlsxCell, XlsxSheet } from '../utils/xlsxExport';
 import ConfirmDialog from './ConfirmDialog';
 import { PIPE_WIRE_CATALOG } from '../data/pipeWireCatalog';
 import PipeWireCalculatorModal from './PipeWireCalculatorModal';
@@ -168,6 +171,9 @@ export default function QuotationBuilder({
   const grandTotal = equipmentTotal + constructionTotalWithTax;
   const depositAmount = equipmentTotal;
   const balanceDue = constructionTotalWithTax;
+  const exportConstructionRows = draft.constructionItems.filter(
+    (row) => row.name.trim() !== '' || row.spec.trim() !== '' || (Number(row.unitPrice) || 0) > 0
+  );
 
   const updateDraftField = <K extends keyof QuotationDraft>(key: K, value: QuotationDraft[K]) => {
     onUpdateDraft({ ...draft, [key]: value });
@@ -216,6 +222,150 @@ export default function QuotationBuilder({
   };
 
   const minConstructionBlankRows = Math.max(0, 7 - draft.constructionItems.length);
+
+  const getExportFilename = (extension: string) => {
+    const customerName = draft.customerName.trim().replace(/[\\/:*?"<>|]/g, '_') || '未命名客戶';
+    return `冷氣工程估價單_${customerName}.${extension}`;
+  };
+
+  const downloadExport = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const handleExportText = () => {
+    const lines = [
+      '冷氣工程估價單',
+      '',
+      `顧客姓名：${draft.customerName}`,
+      `顧客地址：${draft.customerAddress}`,
+      `顧客電話：${draft.customerPhone}`,
+      `估價日期：${draft.quoteDate}`,
+      '',
+      '設備明細',
+    ];
+
+    brandGroups.forEach((group) => {
+      const eng = BRAND_ENGLISH_MAP[group.brand];
+      lines.push(eng ? `${group.brand} (${eng})系列空調設備` : `${group.brand} 系列空調設備`);
+      group.items.forEach((item) => {
+        const subItems = getSubItems(item);
+        const models = subItems.map((sub) => extractModelCode(sub.product.name)).join(' + ');
+        const capacities = subItems
+          .map((sub) => extractPowerLabel(sub.product.capacityKw))
+          .join(' + ');
+        const unitPrice = effectiveUnitPrice(item);
+        lines.push(
+          `位置：${item.location || ''}｜機型：${models}｜功率：${capacities}｜單價：${unitPrice.toLocaleString()}｜數量：${item.quantity}｜價錢：${(unitPrice * item.quantity).toLocaleString()}｜備註：${item.remark || ''}`
+        );
+      });
+    });
+
+    lines.push('', '施工暨材料明細');
+    lines.push('項目｜規格｜數量｜單價｜價錢');
+    exportConstructionRows.forEach((row) => {
+      const quantity = Number(row.quantity) || 0;
+      const unitPrice = Number(row.unitPrice) || 0;
+      lines.push(
+        `${row.name}｜${row.spec}｜${row.quantity === '' ? '' : quantity}｜${row.unitPrice === '' ? '' : unitPrice.toLocaleString()}｜${(quantity * unitPrice).toLocaleString()}`
+      );
+    });
+
+    lines.push(
+      '',
+      `施工小計（未稅）：${constructionSubtotal.toLocaleString()}`,
+      `施工總價（含稅）：${constructionTotalWithTax.toLocaleString()}`,
+      `設備總價：${equipmentTotal.toLocaleString()}`,
+      `完工總價：${grandTotal.toLocaleString()}`,
+      `訂金（設備款）：${depositAmount.toLocaleString()}`,
+      `完工驗收後尾款：${balanceDue.toLocaleString()}`,
+      '設備金額含稅、施工金額外加5%'
+    );
+
+    downloadExport(
+      new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/plain;charset=utf-8' }),
+      getExportFilename('txt')
+    );
+  };
+
+  const handleExportSpreadsheet = () => {
+    const equipmentRows: XlsxCell[][] = [
+      ['品牌', '位置', '機型', '型式', '功率(KW)', '單價', '數量', '價錢', '備註'],
+    ];
+    brandGroups.forEach((group) => {
+      group.items.forEach((item) => {
+        const subItems = getSubItems(item);
+        const unitPrice = effectiveUnitPrice(item);
+        equipmentRows.push([
+          group.brand,
+          item.location || '',
+          subItems.map((sub) => extractModelCode(sub.product.name)).join(' + '),
+          subItems
+            .map(
+              (sub) =>
+                `${sub.product.modelType}型 - ${sub.product.inverterType} - ${sub.product.climateMode}`
+            )
+            .join(' + '),
+          subItems.map((sub) => extractPowerLabel(sub.product.capacityKw)).join(' + '),
+          unitPrice,
+          item.quantity,
+          unitPrice * item.quantity,
+          item.remark || '',
+        ]);
+      });
+    });
+
+    const constructionRows: XlsxCell[][] = [
+      ['項目', '規格', '數量', '單價', '價錢'],
+      ...exportConstructionRows.map((row) => {
+        const quantity = Number(row.quantity) || 0;
+        const unitPrice = Number(row.unitPrice) || 0;
+        return [
+          row.name,
+          row.spec,
+          row.quantity === '' ? '' : quantity,
+          row.unitPrice === '' ? '' : unitPrice,
+          quantity * unitPrice,
+        ];
+      }),
+    ];
+
+    const sheets: XlsxSheet[] = [
+      {
+        name: '報價摘要',
+        rows: [
+          ['冷氣工程估價單'],
+          [],
+          ['顧客姓名', draft.customerName],
+          ['顧客地址', draft.customerAddress],
+          ['顧客電話', draft.customerPhone],
+          ['估價日期', draft.quoteDate],
+          [],
+          ['金額摘要', '金額'],
+          ['施工小計（未稅）', constructionSubtotal],
+          ['施工總價（含稅）', constructionTotalWithTax],
+          ['設備總價', equipmentTotal],
+          ['完工總價', grandTotal],
+          ['訂金（設備款）', depositAmount],
+          ['完工驗收後尾款', balanceDue],
+          ['備註', '設備金額含稅、施工金額外加5%'],
+        ],
+      },
+      { name: '設備明細', rows: equipmentRows },
+      { name: '施工材料明細', rows: constructionRows },
+    ];
+
+    downloadExport(
+      new Blob([createXlsxWorkbook(sheets)], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      }),
+      getExportFilename('xlsx')
+    );
+  };
 
   // Export crisp high-DPI JPG quotation matching the reference layout (NO edit buttons)
   const handleExportImage = () => {
@@ -659,6 +809,24 @@ export default function QuotationBuilder({
               </button>
 
               {/* 4. 匯出圖檔 (奶油白) */}
+              <button
+                type="button"
+                onClick={handleExportText}
+                className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-[#DFCBB9] bg-[#FFF8EE] px-3.5 py-2 text-sm font-bold text-[#3B312C] transition-colors hover:bg-[#F5E6D5] whitespace-nowrap"
+              >
+                <FileText className="h-4 w-4 shrink-0" />
+                <span>匯出文字</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportSpreadsheet}
+                className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-[#DFCBB9] bg-[#FFF8EE] px-3.5 py-2 text-sm font-bold text-[#3B312C] transition-colors hover:bg-[#F5E6D5] whitespace-nowrap"
+              >
+                <FileSpreadsheet className="h-4 w-4 shrink-0" />
+                <span>匯出試算表</span>
+              </button>
+
               <button
                 type="button"
                 onClick={handleExportImage}
