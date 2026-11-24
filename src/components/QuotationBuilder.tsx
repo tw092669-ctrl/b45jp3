@@ -64,7 +64,12 @@ const CONSTRUCTION_PRESET_ITEMS = [
   '其他',
 ] as const;
 
-function extractPowerLabel(capacityKw: string): string {
+function extractPowerLabel(capacityKw: string, modelName: string): string {
+  const modelCapacity = extractModelCode(modelName).match(/(?:^|[^0-9])(\d{2,3})(?=[A-Z]|$)/i);
+  if (modelCapacity) {
+    return `${(Number(modelCapacity[1]) / 10).toFixed(1)}KW`;
+  }
+
   const match = capacityKw.match(/[\d.]+\s*kW/i);
   return match ? match[0].toUpperCase().replace(/\s+/g, '') : capacityKw || '—';
 }
@@ -256,7 +261,7 @@ export default function QuotationBuilder({
         const subItems = getSubItems(item);
         const models = subItems.map((sub) => extractModelCode(sub.product.name)).join(' + ');
         const capacities = subItems
-          .map((sub) => extractPowerLabel(sub.product.capacityKw))
+          .map((sub) => extractPowerLabel(sub.product.capacityKw, sub.product.name))
           .join(' + ');
         const unitPrice = effectiveUnitPrice(item);
         lines.push(
@@ -310,7 +315,7 @@ export default function QuotationBuilder({
                 `${sub.product.modelType}型 - ${sub.product.inverterType} - ${sub.product.climateMode}`
             )
             .join(' + '),
-          subItems.map((sub) => extractPowerLabel(sub.product.capacityKw)).join(' + '),
+          subItems.map((sub) => extractPowerLabel(sub.product.capacityKw, sub.product.name)).join(' + '),
           unitPrice,
           item.quantity,
           unitPrice * item.quantity,
@@ -528,7 +533,7 @@ export default function QuotationBuilder({
             const blockTop = y + (rowH - subItems.length * equipSubLineH) / 2;
             subItems.forEach((sub, sIdx) => {
               const sy = blockTop + sIdx * equipSubLineH;
-              const powerStr = extractPowerLabel(sub.product.capacityKw);
+              const powerStr = extractPowerLabel(sub.product.capacityKw, sub.product.name);
               ctx.fillStyle = '#0F172A';
               ctx.font = '14px "JetBrains Mono", sans-serif';
               ctx.fillText(powerStr, rx + col.w / 2, sy + 26);
@@ -935,7 +940,7 @@ export default function QuotationBuilder({
                               {subItems.map((sub, sIdx) => {
                                 const specSummary = `${sub.product.brand} - ${sub.product.modelType}型 - ${sub.product.inverterType} - ${sub.product.climateMode}`;
                                 const modelCode = extractModelCode(sub.product.name);
-                                const powerStr = extractPowerLabel(sub.product.capacityKw);
+                                const powerStr = extractPowerLabel(sub.product.capacityKw, sub.product.name);
                                 return (
                                   <div
                                     key={`${sub.lineId}-${sIdx}`}
@@ -1344,7 +1349,7 @@ export default function QuotationBuilder({
                               <div className="space-y-3">
                                 {subItems.map((sub, sIdx) => (
                                   <div key={`${sub.lineId}-kw-${sIdx}`}>
-                                    {extractPowerLabel(sub.product.capacityKw)}
+                                    {extractPowerLabel(sub.product.capacityKw, sub.product.name)}
                                   </div>
                                 ))}
                               </div>
