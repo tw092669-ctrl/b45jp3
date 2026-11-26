@@ -913,7 +913,7 @@ export default function QuotationBuilder({
             return (
               <div key={group.brand} className="mt-6">
                 {/* ========= 手機版專屬卡片編輯介面 (md:hidden) ========= */}
-                <div className="space-y-3 md:hidden">
+                <div className="hidden space-y-3 md:hidden">
                   <div className="rounded-xl border-2 border-[#4A3F3A] bg-[#F5E6D5] px-3 py-2.5 text-center text-base font-bold text-[#2E4F7E]">
                     {sectionTitle}
                   </div>
@@ -1232,8 +1232,8 @@ export default function QuotationBuilder({
                   })}
                 </div>
 
-                {/* ========= 桌機版完整紙本表格編輯介面 (hidden md:block) ========= */}
-                <div className="hidden overflow-x-auto md:block">
+                {/* ========= 全裝置共用紙本表格編輯介面 ========= */}
+                <div className="overflow-x-auto">
                   <table className="w-full min-w-[780px] border-collapse border-2 border-[#4A3F3A] bg-[#FFFDF9] text-center text-sm">
                     <thead>
                       <tr className="bg-[#F5E6D5]/75">
@@ -1557,7 +1557,7 @@ export default function QuotationBuilder({
         )}
 
         {/* ========= 施工暨材料明細列表：手機版卡片介面 (md:hidden) ========= */}
-        <div className="mt-6 space-y-3 md:hidden">
+        <div className="mt-6 hidden space-y-3 md:hidden">
           <div className="rounded-xl border-2 border-[#4A3F3A] bg-[#F5E6D5] px-3 py-2.5 text-center text-base font-bold text-[#2E4F7E]">
             施工暨材料明細列表
           </div>
@@ -1733,8 +1733,8 @@ export default function QuotationBuilder({
           </div>
         </div>
 
-        {/* ========= 施工暨材料明細列表：桌機版紙本表格 (hidden md:block) ========= */}
-        <div className="mt-6 hidden overflow-x-auto md:block">
+        {/* ========= 施工暨材料明細列表：全裝置共用紙本表格 ========= */}
+        <div className="mt-6 overflow-x-auto">
           <table className="w-full min-w-[780px] border-collapse border-2 border-[#4A3F3A] bg-[#FFFDF9] text-center text-sm">
             <thead>
               <tr className="bg-[#F5E6D5]/75">
