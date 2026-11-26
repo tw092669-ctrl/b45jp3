@@ -10,12 +10,12 @@ export default function MultiSplitLookup() {
   const [selectedBrand, setSelectedBrand] = useState<(typeof BRANDS)[number]>('全部');
 
   const filteredUnits = useMemo(() => {
-    const normalizedKeyword = keyword.trim().toLowerCase();
+    const keywords = keyword.trim().toLowerCase().split(/\s+/).filter(Boolean);
     return MULTI_SPLIT_OUTDOOR_UNITS
       .filter((unit) => {
         const matchesBrand = selectedBrand === '全部' || unit.brand === selectedBrand;
-        const searchable = `${unit.brand} ${unit.model} ${unit.series} ${unit.presets.flatMap((preset) => preset.indoorCodes).join(' ')}`.toLowerCase();
-        return matchesBrand && (!normalizedKeyword || searchable.includes(normalizedKeyword));
+        const searchable = `${unit.brand} ${unit.model} ${unit.series} ${unit.presets.flatMap((preset) => [preset.label, ...preset.indoorCodes]).join(' ')}`.toLowerCase();
+        return matchesBrand && keywords.every((part) => searchable.includes(part));
       })
       .sort((a, b) => a.ratedCoolingKw - b.ratedCoolingKw || a.model.localeCompare(b.model, 'zh-TW'));
   }, [keyword, selectedBrand]);
